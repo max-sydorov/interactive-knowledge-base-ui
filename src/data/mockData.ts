@@ -118,6 +118,16 @@ Handles user authentication and authorization.
 Manages application configuration.`,
       sourceFiles: ['/api/routes/settings.js']
     },
+    {
+      id: 'api-notifications',
+      name: '/api/notifications',
+      type: 'api',
+      service: 'Notification Service',
+      description: `# Notifications API
+
+Manages user notifications and alerts.`,
+      sourceFiles: ['/api/routes/notifications.js']
+    },
     
     // Database Tables
     {
@@ -188,6 +198,26 @@ Partitioned by time with 7-day chunks.`,
 
 Key-value store for application configuration.`,
       sourceFiles: ['/db/migrations/004_settings.sql']
+    },
+    {
+      id: 'db-audit',
+      name: 'audit_logs',
+      type: 'database',
+      service: 'PostgreSQL',
+      description: `# Audit Logs Table
+
+Stores all user actions for compliance and debugging.`,
+      sourceFiles: ['/db/migrations/005_audit.sql']
+    },
+    {
+      id: 'db-notifications',
+      name: 'notifications',
+      type: 'database',
+      service: 'PostgreSQL',
+      description: `# Notifications Table
+
+Stores user notifications and delivery status.`,
+      sourceFiles: ['/db/migrations/006_notifications.sql']
     }
   ],
   links: [
@@ -197,12 +227,25 @@ Key-value store for application configuration.`,
     { source: 'ui-users', target: 'api-users', relationshipType: 'manages' },
     { source: 'ui-users', target: 'api-auth', relationshipType: 'authenticates' },
     { source: 'ui-settings', target: 'api-settings', relationshipType: 'configures' },
+    { source: 'ui-settings', target: 'api-users', relationshipType: 'updates profile' },
+    
+    // API to API connections
+    { source: 'api-users', target: 'api-auth', relationshipType: 'verifies token' },
+    { source: 'api-users', target: 'api-notifications', relationshipType: 'triggers' },
+    { source: 'api-auth', target: 'api-users', relationshipType: 'fetches user' },
+    { source: 'api-metrics', target: 'api-users', relationshipType: 'enriches data' },
     
     // API to Database connections
     { source: 'api-users', target: 'db-users', relationshipType: 'reads/writes' },
+    { source: 'api-users', target: 'db-audit', relationshipType: 'logs actions' },
     { source: 'api-auth', target: 'db-users', relationshipType: 'validates' },
     { source: 'api-auth', target: 'db-sessions', relationshipType: 'creates' },
     { source: 'api-metrics', target: 'db-metrics', relationshipType: 'stores' },
-    { source: 'api-settings', target: 'db-settings', relationshipType: 'persists' }
+    { source: 'api-settings', target: 'db-settings', relationshipType: 'persists' },
+    { source: 'api-notifications', target: 'db-notifications', relationshipType: 'stores' },
+    
+    // Database to Database connections
+    { source: 'db-sessions', target: 'db-users', relationshipType: 'references' },
+    { source: 'db-audit', target: 'db-users', relationshipType: 'references' }
   ]
 };

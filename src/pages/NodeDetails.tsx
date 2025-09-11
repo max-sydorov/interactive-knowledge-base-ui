@@ -355,8 +355,9 @@ const NodeDetails: React.FC = () => {
 
               <Button 
                 onClick={handleAskQuestion}
-                className="bg-gradient-primary hover:brightness-110"
+                className="w-full bg-primary hover:bg-primary/80 text-primary-foreground"
                 disabled={!question.trim()}
+                size="lg"
               >
                 Submit
               </Button>

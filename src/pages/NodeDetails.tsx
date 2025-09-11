@@ -15,6 +15,7 @@ const NodeDetails: React.FC = () => {
   const navigate = useNavigate();
   const [question, setQuestion] = useState('');
   const [llmResponse, setLlmResponse] = useState('');
+  const [isThinking, setIsThinking] = useState(false);
 
   const node = mockGraph.nodes.find(n => n.id === nodeId);
 
@@ -170,11 +171,22 @@ const NodeDetails: React.FC = () => {
     }
   }, [hoveredLink]);
 
-  const handleAskQuestion = () => {
+  const handleAskQuestion = async () => {
     if (!question.trim()) return;
     
-    // Mock LLM response
-    setLlmResponse(`Based on the context for this node, here's information about "${question}":\n\nThis is a mock response. In a real implementation, this would query an LLM with the node's information.`);
+    setIsThinking(true);
+    setLlmResponse('');
+    
+    // Mock streaming response
+    const mockResponse = `Here's information about "${question}":\n\nThis is a mock streaming response. In a real implementation, this would stream from the server.`;
+    
+    // Simulate streaming by adding characters progressively
+    for (let i = 0; i <= mockResponse.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 20));
+      setLlmResponse(mockResponse.slice(0, i));
+    }
+    
+    setIsThinking(false);
   };
 
   if (!node) {
@@ -356,15 +368,20 @@ const NodeDetails: React.FC = () => {
               <Button 
                 onClick={handleAskQuestion}
                 className="w-full bg-primary hover:bg-primary/80 text-primary-foreground"
-                disabled={!question.trim()}
+                disabled={!question.trim() || isThinking}
                 size="lg"
               >
-                Submit
+                {isThinking ? 'Thinking...' : 'Submit'}
               </Button>
 
-              {llmResponse && (
+              {(isThinking || llmResponse) && (
                 <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
-                  <p className="text-sm whitespace-pre-wrap">{llmResponse}</p>
+                  {isThinking && !llmResponse && (
+                    <p className="text-sm text-muted-foreground animate-pulse">Thinking...</p>
+                  )}
+                  {llmResponse && (
+                    <p className="text-sm whitespace-pre-wrap">{llmResponse}</p>
+                  )}
                 </div>
               )}
             </div>

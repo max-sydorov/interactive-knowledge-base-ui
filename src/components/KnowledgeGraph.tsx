@@ -208,7 +208,7 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
       <div className="absolute bottom-4 left-4 flex gap-4 p-3 glass-card rounded-lg">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-[#00D9FF] node-glow-ui"></div>
-          <span className="text-xs text-muted-foreground">UI Page</span>
+          <span className="text-xs text-muted-foreground">UI View</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-[#B833FF] node-glow-api"></div>
@@ -216,7 +216,7 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-[#3B82F6] node-glow-database"></div>
-          <span className="text-xs text-muted-foreground">Database</span>
+          <span className="text-xs text-muted-foreground">Database Table</span>
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@ import { KnowledgeGraph } from '@/types/knowledge';
 
 export const mockGraph: KnowledgeGraph = {
   nodes: [
-    // UI Pages
+    // UI Views
     {
       id: 'ui-dashboard',
       name: 'Dashboard',
@@ -235,7 +235,7 @@ Stores user notifications and delivery status.`,
     { source: 'api-auth', target: 'api-users', relationshipType: 'fetches user' },
     { source: 'api-metrics', target: 'api-users', relationshipType: 'enriches data' },
     
-    // API to Database connections
+    // API to Database Table connections
     { source: 'api-users', target: 'db-users', relationshipType: 'reads/writes' },
     { source: 'api-users', target: 'db-audit', relationshipType: 'logs actions' },
     { source: 'api-auth', target: 'db-users', relationshipType: 'validates' },
@@ -244,7 +244,7 @@ Stores user notifications and delivery status.`,
     { source: 'api-settings', target: 'db-settings', relationshipType: 'persists' },
     { source: 'api-notifications', target: 'db-notifications', relationshipType: 'stores' },
     
-    // Database to Database connections
+    // Database Table to Database Table connections
     { source: 'db-sessions', target: 'db-users', relationshipType: 'references' },
     { source: 'db-audit', target: 'db-users', relationshipType: 'references' }
   ]

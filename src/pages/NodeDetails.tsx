@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -7,8 +7,9 @@ import { ArrowLeft, FileCode, MessageSquare, ChevronRight, Network } from 'lucid
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { mockGraph } from '@/data/mockData';
-import { KnowledgeNode } from '@/types/knowledge';
+import { apiService } from '@/services/apiService';
+import { KnowledgeNode, KnowledgeGraph } from '@/types/knowledge';
+import { useToast } from '@/hooks/use-toast';
 
 const NodeDetails: React.FC = () => {
   const { nodeId } = useParams<{ nodeId: string }>();
@@ -16,21 +17,50 @@ const NodeDetails: React.FC = () => {
   const [question, setQuestion] = useState('');
   const [llmResponse, setLlmResponse] = useState('');
   const [isThinking, setIsThinking] = useState(false);
-
-  const node = mockGraph.nodes.find(n => n.id === nodeId);
-
+  const [node, setNode] = useState<KnowledgeNode | null>(null);
+  const [graphData, setGraphData] = useState<KnowledgeGraph | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!nodeId) return;
+      
+      try {
+        setIsLoading(true);
+        const [nodeData, graph] = await Promise.all([
+          apiService.getNode(nodeId),
+          apiService.getKnowledgeGraph()
+        ]);
+        
+        setNode(nodeData);
+        setGraphData(graph);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load node data from server",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [nodeId, toast]);
 
   const relatedGraph = useMemo(() => {
-    if (!node) return { nodes: [], links: [] };
+    if (!node || !graphData) return { nodes: [], links: [] };
 
     const relatedNodes = new Set<string>([node.id]);
     const relatedLinks = [];
 
     // Find upstream nodes (nodes that link to this node)
-    mockGraph.links.forEach(link => {
+    graphData.links.forEach(link => {
       if (link.target === node.id) {
-        const sourceNode = mockGraph.nodes.find(n => n.id === link.source);
+        const sourceNode = graphData.nodes.find(n => n.id === link.source);
         if (sourceNode) {
           relatedNodes.add(sourceNode.id);
           relatedLinks.push({ ...link, type: 'upstream' });
@@ -39,9 +69,9 @@ const NodeDetails: React.FC = () => {
     });
 
     // Find downstream nodes (nodes this node links to)
-    mockGraph.links.forEach(link => {
+    graphData.links.forEach(link => {
       if (link.source === node.id) {
-        const targetNode = mockGraph.nodes.find(n => n.id === link.target);
+        const targetNode = graphData.nodes.find(n => n.id === link.target);
         if (targetNode) {
           relatedNodes.add(targetNode.id);
           relatedLinks.push({ ...link, type: 'downstream' });
@@ -49,10 +79,10 @@ const NodeDetails: React.FC = () => {
       }
     });
 
-    const nodes = mockGraph.nodes.filter(n => relatedNodes.has(n.id));
+    const nodes = graphData.nodes.filter(n => relatedNodes.has(n.id));
     
     return { nodes, links: relatedLinks };
-  }, [node, nodeId]);
+  }, [node, nodeId, graphData]);
 
   const getNodeColor = useCallback((graphNode: KnowledgeNode) => {
     if (graphNode.id === nodeId) return '#FFD700';
@@ -177,17 +207,54 @@ const NodeDetails: React.FC = () => {
     setIsThinking(true);
     setLlmResponse('');
     
-    // Mock streaming response
-    const mockResponse = `Here's information about "${question}":\n\nThis is a mock streaming response. In a real implementation, this would stream from the server.`;
-    
-    // Simulate streaming by adding characters progressively
-    for (let i = 0; i <= mockResponse.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 20));
-      setLlmResponse(mockResponse.slice(0, i));
+    try {
+      const stream = await apiService.askQuestion(question, { 
+        nodeId: nodeId,
+        mode: 'node-and-downstream'
+      });
+      
+      if (stream) {
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value);
+          setLlmResponse(prev => prev + chunk);
+        }
+      } else {
+        // Fallback to mock response if streaming fails
+        const mockResponse = `Here's information about "${question}":\n\nThis is a mock streaming response. In a real implementation, this would stream from the server.`;
+        
+        for (let i = 0; i <= mockResponse.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 20));
+          setLlmResponse(mockResponse.slice(0, i));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to ask question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get response from server",
+        variant: "destructive"
+      });
+    } finally {
+      setIsThinking(false);
     }
-    
-    setIsThinking(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Loading...</h2>
+          <p className="text-muted-foreground">Fetching node data from server</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!node) {
     return (

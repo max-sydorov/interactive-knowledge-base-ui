@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import KnowledgeGraph from '@/components/KnowledgeGraph';
 import ServiceFilter from '@/components/ServiceFilter';
-import { mockGraph } from '@/data/mockData';
+import { apiService } from '@/services/apiService';
+import { KnowledgeGraph as KnowledgeGraphType } from '@/types/knowledge';
 import { Network } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const Index: React.FC = () => {
   const [selectedService, setSelectedService] = useState('all');
@@ -12,11 +14,35 @@ const Index: React.FC = () => {
   const [question, setQuestion] = useState('');
   const [llmResponse, setLlmResponse] = useState('');
   const [isThinking, setIsThinking] = useState(false);
-  
-  const services = useMemo(() => {
-    const serviceSet = new Set(mockGraph.nodes.map(node => node.service));
-    return Array.from(serviceSet).sort();
-  }, []);
+  const [graphData, setGraphData] = useState<KnowledgeGraphType | null>(null);
+  const [services, setServices] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [graph, servicesData] = await Promise.all([
+          apiService.getKnowledgeGraph(),
+          apiService.getServices()
+        ]);
+        setGraphData(graph);
+        setServices(servicesData);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load data from server",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [toast]);
 
   const handleAskQuestion = async () => {
     if (!question.trim()) return;
@@ -24,16 +50,39 @@ const Index: React.FC = () => {
     setIsThinking(true);
     setLlmResponse('');
     
-    // Mock streaming response
-    const mockResponse = `Here's information about "${question}":\n\nThis is a mock streaming response. In a real implementation, this would stream from the server.`;
-    
-    // Simulate streaming by adding characters progressively
-    for (let i = 0; i <= mockResponse.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 20));
-      setLlmResponse(mockResponse.slice(0, i));
+    try {
+      const stream = await apiService.askQuestion(question);
+      
+      if (stream) {
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value);
+          setLlmResponse(prev => prev + chunk);
+        }
+      } else {
+        // Fallback to mock response if streaming fails
+        const mockResponse = `Here's information about "${question}":\n\nThis is a mock streaming response. In a real implementation, this would stream from the server.`;
+        
+        for (let i = 0; i <= mockResponse.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 20));
+          setLlmResponse(mockResponse.slice(0, i));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to ask question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get response from server",
+        variant: "destructive"
+      });
+    } finally {
+      setIsThinking(false);
     }
-    
-    setIsThinking(false);
   };
 
   return (
@@ -69,7 +118,7 @@ const Index: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Nodes</p>
-                  <p className="text-3xl font-bold text-primary">{mockGraph.nodes.length}</p>
+                  <p className="text-3xl font-bold text-primary">{graphData?.nodes.length || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
                   <div className="w-6 h-6 rounded-full bg-primary node-glow-ui"></div>
@@ -93,7 +142,7 @@ const Index: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Connections</p>
-                  <p className="text-3xl font-bold text-accent">{mockGraph.links.length}</p>
+                  <p className="text-3xl font-bold text-accent">{graphData?.links.length || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
                   <div className="w-6 h-6 rounded-full bg-accent node-glow-database"></div>
@@ -110,11 +159,21 @@ const Index: React.FC = () => {
                 Click on any node to view detailed information and relationships
               </p>
             </div>
-            <KnowledgeGraph 
-              data={mockGraph} 
-              selectedService={selectedService}
-              height={600}
-            />
+            {isLoading ? (
+              <div className="flex justify-center items-center h-[600px]">
+                <div className="text-muted-foreground">Loading graph data...</div>
+              </div>
+            ) : graphData ? (
+              <KnowledgeGraph 
+                data={graphData} 
+                selectedService={selectedService}
+                height={600}
+              />
+            ) : (
+              <div className="flex justify-center items-center h-[600px]">
+                <div className="text-muted-foreground">No data available</div>
+              </div>
+            )}
           </div>
 
           {/* Ask a Question */}

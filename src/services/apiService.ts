@@ -23,13 +23,16 @@ class ApiService {
     }
   }
 
-  async getKnowledgeGraph(service?: string, flow?: string): Promise<KnowledgeGraph> {
+  async getKnowledgeGraph(service?: string, flow?: string, nodeId?: string): Promise<KnowledgeGraph> {
     const params = new URLSearchParams();
     if (service && service !== 'all') {
       params.append('service', service);
     }
     if (flow && flow !== 'all') {
       params.append('flow', flow);
+    }
+    if (nodeId) {
+      params.append('nodeId', nodeId);
     }
     
     const queryString = params.toString();

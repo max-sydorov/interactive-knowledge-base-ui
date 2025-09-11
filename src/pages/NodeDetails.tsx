@@ -31,7 +31,7 @@ const NodeDetails: React.FC = () => {
         setIsLoading(true);
         const [nodeData, graph] = await Promise.all([
           apiService.getNode(nodeId),
-          apiService.getKnowledgeGraph()
+          apiService.getKnowledgeGraph(undefined, undefined, nodeId) // Pass nodeId to get filtered graph
         ]);
         
         setNode(nodeData);
@@ -51,38 +51,11 @@ const NodeDetails: React.FC = () => {
     fetchData();
   }, [nodeId, toast]);
 
+  // The graph data from API is already filtered, just use it directly
   const relatedGraph = useMemo(() => {
-    if (!node || !graphData) return { nodes: [], links: [] };
-
-    const relatedNodes = new Set<string>([node.id]);
-    const relatedLinks = [];
-
-    // Find upstream nodes (nodes that link to this node)
-    graphData.links.forEach(link => {
-      if (link.target === node.id) {
-        const sourceNode = graphData.nodes.find(n => n.id === link.source);
-        if (sourceNode) {
-          relatedNodes.add(sourceNode.id);
-          relatedLinks.push({ ...link, type: 'upstream' });
-        }
-      }
-    });
-
-    // Find downstream nodes (nodes this node links to)
-    graphData.links.forEach(link => {
-      if (link.source === node.id) {
-        const targetNode = graphData.nodes.find(n => n.id === link.target);
-        if (targetNode) {
-          relatedNodes.add(targetNode.id);
-          relatedLinks.push({ ...link, type: 'downstream' });
-        }
-      }
-    });
-
-    const nodes = graphData.nodes.filter(n => relatedNodes.has(n.id));
-    
-    return { nodes, links: relatedLinks };
-  }, [node, nodeId, graphData]);
+    if (!graphData) return { nodes: [], links: [] };
+    return graphData;
+  }, [graphData]);
 
   const getNodeColor = useCallback((graphNode: KnowledgeNode) => {
     if (graphNode.id === nodeId) return '#FFD700';

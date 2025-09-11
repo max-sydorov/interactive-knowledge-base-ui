@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 
 const Index: React.FC = () => {
   const [selectedService, setSelectedService] = useState('all');
+  const [selectedFlow, setSelectedFlow] = useState('all');
   const [question, setQuestion] = useState('');
   const [llmResponse, setLlmResponse] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -52,6 +53,8 @@ const Index: React.FC = () => {
               services={services}
               selectedService={selectedService}
               onServiceChange={setSelectedService}
+              selectedFlow={selectedFlow}
+              onFlowChange={setSelectedFlow}
             />
           </div>
         </div>

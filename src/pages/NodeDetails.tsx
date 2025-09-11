@@ -14,7 +14,6 @@ const NodeDetails: React.FC = () => {
   const { nodeId } = useParams<{ nodeId: string }>();
   const navigate = useNavigate();
   const [question, setQuestion] = useState('');
-  const [context, setContext] = useState<'node-only' | 'node-and-downstream'>('node-only');
   const [llmResponse, setLlmResponse] = useState('');
 
   const node = mockGraph.nodes.find(n => n.id === nodeId);
@@ -175,11 +174,7 @@ const NodeDetails: React.FC = () => {
     if (!question.trim()) return;
     
     // Mock LLM response
-    const contextInfo = context === 'node-and-downstream' 
-      ? 'including all downstream dependencies' 
-      : 'for this node only';
-    
-    setLlmResponse(`Based on the context ${contextInfo}, here's information about "${question}":\n\nThis is a mock response. In a real implementation, this would query an LLM with the node's information and optionally its downstream dependencies.`);
+    setLlmResponse(`Based on the context for this node, here's information about "${question}":\n\nThis is a mock response. In a real implementation, this would query an LLM with the node's information.`);
   };
 
   if (!node) {
@@ -351,34 +346,19 @@ const NodeDetails: React.FC = () => {
             </div>
             
             <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Context</label>
-                <Select value={context} onValueChange={(v: any) => setContext(v)}>
-                  <SelectTrigger className="bg-input/50 border-border/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover/95 backdrop-blur-xl border-border/50">
-                    <SelectItem value="node-only">This node only</SelectItem>
-                    <SelectItem value="node-and-downstream">Node and downstream dependencies</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Your Question</label>
-                <Textarea
-                  placeholder="Ask anything about this node..."
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
-                  className="min-h-[100px] bg-input/50 border-border/50 resize-none"
-                />
-              </div>
+              <Textarea
+                placeholder="Ask anything about this node..."
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                className="min-h-[100px] bg-input/50 border-border/50 resize-none"
+              />
 
               <Button 
                 onClick={handleAskQuestion}
-                className="w-full bg-gradient-primary hover:brightness-110"
+                className="bg-gradient-primary hover:brightness-110"
+                disabled={!question.trim()}
               >
-                Ask Question
+                Submit
               </Button>
 
               {llmResponse && (

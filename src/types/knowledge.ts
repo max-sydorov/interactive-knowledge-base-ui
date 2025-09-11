@@ -15,6 +15,7 @@ export interface KnowledgeLink {
   source: string;
   target: string;
   type?: 'upstream' | 'downstream';
+  relationshipType?: string;
 }
 
 export interface KnowledgeGraph {

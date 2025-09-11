@@ -19,6 +19,8 @@ const NodeDetails: React.FC = () => {
 
   const node = mockGraph.nodes.find(n => n.id === nodeId);
 
+  const [hoveredLink, setHoveredLink] = useState<string | null>(null);
+
   const relatedGraph = useMemo(() => {
     if (!node) return { nodes: [], links: [] };
 
@@ -107,6 +109,68 @@ const NodeDetails: React.FC = () => {
     ctx.fillText(label, graphNode.x, graphNode.y + 12 + fontSize / 2 + 4);
   }, [getNodeColor, nodeId]);
 
+  const drawLinkArrow = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const start = link.source;
+    const end = link.target;
+    
+    if (!start.x || !start.y || !end.x || !end.y) return;
+
+    // Calculate arrow position (closer to target)
+    const t = 0.7; // Position along the line (0.7 = 70% towards target)
+    const arrowX = start.x + (end.x - start.x) * t;
+    const arrowY = start.y + (end.y - start.y) * t;
+    
+    // Calculate arrow angle
+    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+    
+    // Arrow size
+    const arrowLength = 8 / Math.sqrt(globalScale);
+    const arrowWidth = 5 / Math.sqrt(globalScale);
+    
+    // Draw arrow
+    ctx.save();
+    ctx.translate(arrowX, arrowY);
+    ctx.rotate(angle);
+    
+    const isHovered = hoveredLink === `${link.source.id}-${link.target.id}`;
+    ctx.fillStyle = link.type === 'upstream' 
+      ? (isHovered ? 'rgba(0, 217, 255, 0.9)' : 'rgba(0, 217, 255, 0.6)')
+      : (isHovered ? 'rgba(184, 51, 255, 0.9)' : 'rgba(184, 51, 255, 0.6)');
+    
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-arrowLength, -arrowWidth);
+    ctx.lineTo(-arrowLength, arrowWidth);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.restore();
+
+    // Draw relationship type on hover
+    if (isHovered && link.relationshipType) {
+      const midX = (start.x + end.x) / 2;
+      const midY = (start.y + end.y) / 2;
+      const fontSize = 10 / globalScale;
+      ctx.font = `${fontSize}px Inter, sans-serif`;
+      const textWidth = ctx.measureText(link.relationshipType).width;
+      
+      // Background for text
+      ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
+      ctx.fillRect(
+        midX - textWidth / 2 - 5,
+        midY - fontSize / 2 - 5,
+        textWidth + 10,
+        fontSize + 10
+      );
+      
+      // Relationship text
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(link.relationshipType, midX, midY);
+    }
+  }, [hoveredLink]);
+
   const handleAskQuestion = () => {
     if (!question.trim()) return;
     
@@ -182,15 +246,36 @@ const NodeDetails: React.FC = () => {
                   width={500}
                   height={300}
                   nodeCanvasObject={paintNode}
+                  linkCanvasObjectMode={() => 'after'}
+                  linkCanvasObject={drawLinkArrow}
                   onNodeClick={(clickedNode: any) => {
                     if (clickedNode.id !== nodeId) {
                       navigate(`/node/${clickedNode.id}`);
                     }
                   }}
-                  linkColor={(link: any) => 
-                    link.type === 'upstream' ? 'rgba(0, 217, 255, 0.4)' : 'rgba(184, 51, 255, 0.4)'
-                  }
+                  linkColor={(link: any) => {
+                    const isHovered = hoveredLink === `${link.source.id}-${link.target.id}`;
+                    return link.type === 'upstream' 
+                      ? (isHovered ? 'rgba(0, 217, 255, 0.5)' : 'rgba(0, 217, 255, 0.3)')
+                      : (isHovered ? 'rgba(184, 51, 255, 0.5)' : 'rgba(184, 51, 255, 0.3)');
+                  }}
                   linkWidth={2}
+                  linkDirectionalArrowLength={0}
+                  onLinkHover={(link: any) => {
+                    if (link) {
+                      setHoveredLink(`${link.source.id}-${link.target.id}`);
+                    } else {
+                      setHoveredLink(null);
+                    }
+                  }}
+                  linkPointerAreaPaint={(link, color, ctx) => {
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 5;
+                    ctx.beginPath();
+                    ctx.moveTo(link.source.x!, link.source.y!);
+                    ctx.lineTo(link.target.x!, link.target.y!);
+                    ctx.stroke();
+                  }}
                   backgroundColor="transparent"
                   enableZoomInteraction={true}
                   enablePanInteraction={true}

@@ -192,17 +192,17 @@ Key-value store for application configuration.`,
   ],
   links: [
     // UI to API connections
-    { source: 'ui-dashboard', target: 'api-metrics' },
-    { source: 'ui-dashboard', target: 'api-users' },
-    { source: 'ui-users', target: 'api-users' },
-    { source: 'ui-users', target: 'api-auth' },
-    { source: 'ui-settings', target: 'api-settings' },
+    { source: 'ui-dashboard', target: 'api-metrics', relationshipType: 'fetches' },
+    { source: 'ui-dashboard', target: 'api-users', relationshipType: 'queries' },
+    { source: 'ui-users', target: 'api-users', relationshipType: 'manages' },
+    { source: 'ui-users', target: 'api-auth', relationshipType: 'authenticates' },
+    { source: 'ui-settings', target: 'api-settings', relationshipType: 'configures' },
     
     // API to Database connections
-    { source: 'api-users', target: 'db-users' },
-    { source: 'api-auth', target: 'db-users' },
-    { source: 'api-auth', target: 'db-sessions' },
-    { source: 'api-metrics', target: 'db-metrics' },
-    { source: 'api-settings', target: 'db-settings' }
+    { source: 'api-users', target: 'db-users', relationshipType: 'reads/writes' },
+    { source: 'api-auth', target: 'db-users', relationshipType: 'validates' },
+    { source: 'api-auth', target: 'db-sessions', relationshipType: 'creates' },
+    { source: 'api-metrics', target: 'db-metrics', relationshipType: 'stores' },
+    { source: 'api-settings', target: 'db-settings', relationshipType: 'persists' }
   ]
 };

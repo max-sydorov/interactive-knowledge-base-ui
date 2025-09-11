@@ -330,7 +330,7 @@ const NodeDetails: React.FC = () => {
               <FileCode className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold">Source Files</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-2">
               {node.sourceFiles.map((file, index) => (
                 <div 
                   key={index}

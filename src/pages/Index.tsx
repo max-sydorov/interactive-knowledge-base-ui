@@ -51,7 +51,10 @@ const Index: React.FC = () => {
     setLlmResponse('');
     
     try {
-      const stream = await apiService.askQuestion(question);
+      const stream = await apiService.askQuestion(question, {
+        service: selectedService !== 'all' ? selectedService : undefined,
+        flow: selectedFlow !== 'all' ? selectedFlow : undefined
+      });
       
       if (stream) {
         const reader = stream.getReader();

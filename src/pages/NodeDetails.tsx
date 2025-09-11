@@ -209,8 +209,7 @@ const NodeDetails: React.FC = () => {
     
     try {
       const stream = await apiService.askQuestion(question, { 
-        nodeId: nodeId,
-        mode: 'node-and-downstream'
+        nodeId: nodeId
       });
       
       if (stream) {

@@ -79,7 +79,14 @@ class ApiService {
     }
   }
 
-  async askQuestion(question: string, context?: { nodeId?: string; mode?: string }): Promise<ReadableStream<Uint8Array> | null> {
+  async askQuestion(
+    question: string, 
+    context?: { 
+      nodeId?: string; 
+      service?: string; 
+      flow?: string;
+    }
+  ): Promise<ReadableStream<Uint8Array> | null> {
     try {
       const response = await fetch(`${API_BASE_URL}/ask`, {
         method: 'POST',

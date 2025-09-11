@@ -1,9 +1,10 @@
 import { KnowledgeGraph, KnowledgeNode } from '@/types/knowledge';
+import { mockGraph } from '@/data/mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 class ApiService {
-  private async fetchWithErrorHandling<T>(url: string): Promise<T> {
+  private async fetchWithErrorHandling<T>(url: string, fallback?: T): Promise<T> {
     try {
       const response = await fetch(url);
       
@@ -14,30 +15,55 @@ class ApiService {
       const data = await response.json();
       return data as T;
     } catch (error) {
-      console.error('API Error:', error);
+      console.error('API Error, using mock data:', error);
+      if (fallback !== undefined) {
+        return fallback;
+      }
       throw error;
     }
   }
 
   async getKnowledgeGraph(): Promise<KnowledgeGraph> {
-    return this.fetchWithErrorHandling<KnowledgeGraph>(`${API_BASE_URL}/knowledge-graph`);
+    return this.fetchWithErrorHandling<KnowledgeGraph>(
+      `${API_BASE_URL}/knowledge-graph`,
+      mockGraph
+    );
   }
 
   async getNode(nodeId: string): Promise<KnowledgeNode | null> {
     try {
-      return await this.fetchWithErrorHandling<KnowledgeNode>(`${API_BASE_URL}/nodes/${nodeId}`);
+      const result = await this.fetchWithErrorHandling<KnowledgeNode>(
+        `${API_BASE_URL}/nodes/${nodeId}`
+      );
+      return result;
     } catch (error) {
-      console.error(`Failed to fetch node ${nodeId}:`, error);
-      return null;
+      // Fallback to mock data
+      const node = mockGraph.nodes.find(n => n.id === nodeId);
+      return node || null;
     }
   }
 
   async getServices(): Promise<string[]> {
-    return this.fetchWithErrorHandling<string[]>(`${API_BASE_URL}/services`);
+    try {
+      return await this.fetchWithErrorHandling<string[]>(`${API_BASE_URL}/services`);
+    } catch (error) {
+      // Extract unique services from mock data
+      const serviceSet = new Set(mockGraph.nodes.map(node => node.service));
+      return Array.from(serviceSet).sort();
+    }
   }
 
   async getFlows(): Promise<Array<{ value: string; label: string }>> {
-    return this.fetchWithErrorHandling<Array<{ value: string; label: string }>>(`${API_BASE_URL}/flows`);
+    try {
+      return await this.fetchWithErrorHandling<Array<{ value: string; label: string }>>(`${API_BASE_URL}/flows`);
+    } catch (error) {
+      // Return default flows
+      return [
+        { value: 'all', label: 'All flows' },
+        { value: 'merchant-intake', label: 'Merchant Application Intake Experience' },
+        { value: 'basic-info', label: 'Basic Info flow' }
+      ];
+    }
   }
 
   async askQuestion(question: string, context?: { nodeId?: string; mode?: string }): Promise<ReadableStream<Uint8Array> | null> {
@@ -56,7 +82,8 @@ class ApiService {
 
       return response.body;
     } catch (error) {
-      console.error('Failed to ask question:', error);
+      console.error('Failed to ask question, will use mock response:', error);
+      // Return null to trigger mock response in components
       return null;
     }
   }

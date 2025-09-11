@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import ForceGraph2D from 'react-force-graph-2d';
 import { ArrowLeft, FileCode, MessageSquare, ChevronRight, Network } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { apiService } from '@/services/apiService';
 import { KnowledgeNode, KnowledgeGraph } from '@/types/knowledge';
 import { useToast } from '@/hooks/use-toast';
+import KnowledgeGraphComponent from '@/components/KnowledgeGraph';
 
 const NodeDetails: React.FC = () => {
   const { nodeId } = useParams<{ nodeId: string }>();
@@ -20,7 +20,6 @@ const NodeDetails: React.FC = () => {
   const [node, setNode] = useState<KnowledgeNode | null>(null);
   const [graphData, setGraphData] = useState<KnowledgeGraph | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hoveredLink, setHoveredLink] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,129 +49,6 @@ const NodeDetails: React.FC = () => {
 
     fetchData();
   }, [nodeId, toast]);
-
-  // The graph data from API is already filtered, just use it directly
-  const relatedGraph = useMemo(() => {
-    if (!graphData) return { nodes: [], links: [] };
-    return graphData;
-  }, [graphData]);
-
-  const getNodeColor = useCallback((graphNode: KnowledgeNode) => {
-    if (graphNode.id === nodeId) return '#FFD700';
-    switch (graphNode.type) {
-      case 'ui':
-        return '#00D9FF';
-      case 'api':
-        return '#B833FF';
-      case 'database':
-        return '#3B82F6';
-      default:
-        return '#666';
-    }
-  }, [nodeId]);
-
-  const paintNode = useCallback((graphNode: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const label = graphNode.name;
-    const fontSize = 12 / globalScale;
-    ctx.font = `${fontSize}px Inter, sans-serif`;
-    const textWidth = ctx.measureText(label).width;
-    const bckgDimensions = [textWidth + 10, fontSize + 8];
-
-    // Draw glow effect for current node
-    if (graphNode.id === nodeId) {
-      ctx.shadowColor = '#FFD700';
-      ctx.shadowBlur = 30;
-    } else {
-      ctx.shadowColor = getNodeColor(graphNode);
-      ctx.shadowBlur = 15;
-    }
-    
-    // Draw node circle
-    ctx.fillStyle = getNodeColor(graphNode);
-    ctx.beginPath();
-    ctx.arc(graphNode.x, graphNode.y, graphNode.id === nodeId ? 10 : 8, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Reset shadow for text
-    ctx.shadowBlur = 0;
-    
-    // Draw label background
-    ctx.fillStyle = 'rgba(4, 7, 20, 0.9)';
-    ctx.fillRect(
-      graphNode.x - bckgDimensions[0] / 2,
-      graphNode.y + 12,
-      bckgDimensions[0],
-      bckgDimensions[1]
-    );
-    
-    // Draw label text
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = graphNode.id === nodeId ? '#FFD700' : '#fff';
-    ctx.fillText(label, graphNode.x, graphNode.y + 12 + fontSize / 2 + 4);
-  }, [getNodeColor, nodeId]);
-
-  const drawLinkArrow = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const start = link.source;
-    const end = link.target;
-    
-    if (!start.x || !start.y || !end.x || !end.y) return;
-
-    // Calculate arrow position (closer to target)
-    const t = 0.7; // Position along the line (0.7 = 70% towards target)
-    const arrowX = start.x + (end.x - start.x) * t;
-    const arrowY = start.y + (end.y - start.y) * t;
-    
-    // Calculate arrow angle
-    const angle = Math.atan2(end.y - start.y, end.x - start.x);
-    
-    // Arrow size
-    const arrowLength = 8 / Math.sqrt(globalScale);
-    const arrowWidth = 5 / Math.sqrt(globalScale);
-    
-    // Draw arrow
-    ctx.save();
-    ctx.translate(arrowX, arrowY);
-    ctx.rotate(angle);
-    
-    const isHovered = hoveredLink === `${link.source.id}-${link.target.id}`;
-    ctx.fillStyle = link.type === 'upstream' 
-      ? (isHovered ? 'rgba(0, 217, 255, 0.9)' : 'rgba(0, 217, 255, 0.6)')
-      : (isHovered ? 'rgba(184, 51, 255, 0.9)' : 'rgba(184, 51, 255, 0.6)');
-    
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-arrowLength, -arrowWidth);
-    ctx.lineTo(-arrowLength, arrowWidth);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.restore();
-
-    // Draw relationship type on hover
-    if (isHovered && link.relationshipType) {
-      const midX = (start.x + end.x) / 2;
-      const midY = (start.y + end.y) / 2;
-      const fontSize = 10 / globalScale;
-      ctx.font = `${fontSize}px Inter, sans-serif`;
-      const textWidth = ctx.measureText(link.relationshipType).width;
-      
-      // Background for text
-      ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
-      ctx.fillRect(
-        midX - textWidth / 2 - 5,
-        midY - fontSize / 2 - 5,
-        textWidth + 10,
-        fontSize + 10
-      );
-      
-      // Relationship text
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(link.relationshipType, midX, midY);
-    }
-  }, [hoveredLink]);
 
   const handleAskQuestion = async () => {
     if (!question.trim()) return;
@@ -284,90 +160,23 @@ const NodeDetails: React.FC = () => {
               <Network className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold">Relationships</h2>
             </div>
-            <div className="rounded-lg overflow-hidden">
-              <ForceGraph2D
-                graphData={relatedGraph}
-                width={window.innerWidth - 100}
+            {graphData ? (
+              <KnowledgeGraphComponent 
+                data={graphData}
+                highlightNodeId={nodeId}
                 height={500}
-                nodeCanvasObject={paintNode}
-                linkCanvasObjectMode={() => 'after'}
-                linkCanvasObject={drawLinkArrow}
-                onNodeClick={(clickedNode: any) => {
-                  if (clickedNode.id !== nodeId) {
-                    navigate(`/node/${clickedNode.id}`);
-                  }
-                }}
-                linkColor={(link: any) => {
-                  const isHovered = hoveredLink === `${link.source.id}-${link.target.id}`;
-                  return link.type === 'upstream' 
-                    ? (isHovered ? 'rgba(0, 217, 255, 0.5)' : 'rgba(0, 217, 255, 0.3)')
-                    : (isHovered ? 'rgba(184, 51, 255, 0.5)' : 'rgba(184, 51, 255, 0.3)');
-                }}
-                linkWidth={2}
-                linkDirectionalArrowLength={0}
-                onLinkHover={(link: any) => {
-                  if (link) {
-                    setHoveredLink(`${link.source.id}-${link.target.id}`);
-                  } else {
-                    setHoveredLink(null);
-                  }
-                }}
-                linkPointerAreaPaint={(link, color, ctx) => {
-                  ctx.strokeStyle = color;
-                  ctx.lineWidth = 5;
-                  ctx.beginPath();
-                  ctx.moveTo(link.source.x!, link.source.y!);
-                  ctx.lineTo(link.target.x!, link.target.y!);
-                  ctx.stroke();
-                }}
-                backgroundColor="transparent"
-                enableZoomInteraction={true}
-                enablePanInteraction={true}
-                enableNodeDrag={true}
               />
-            </div>
-            <div className="flex gap-4 mt-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-[#00D9FF]"></div>
-                <span className="text-xs text-muted-foreground">Upstream</span>
+            ) : (
+              <div className="flex justify-center items-center h-[500px]">
+                <div className="text-muted-foreground">No graph data available</div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-[#B833FF]"></div>
-                <span className="text-xs text-muted-foreground">Downstream</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-[#FFD700]"></div>
-                <span className="text-xs text-muted-foreground">Current</span>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Description Section */}
+          {/* Overview Section */}
           <div className="glass-card p-6 rounded-xl">
-            <h2 className="text-xl font-semibold mb-4">Description</h2>
-            <div className="prose prose-invert max-w-none">
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  h1: ({children}) => <h1 className="text-2xl font-bold mt-6 mb-4 gradient-text">{children}</h1>,
-                  h2: ({children}) => <h2 className="text-xl font-semibold mt-4 mb-3">{children}</h2>,
-                  h3: ({children}) => <h3 className="text-lg font-medium mt-3 mb-2">{children}</h3>,
-                  code: ({children, ...props}: any) => {
-                    const isInline = !props.className;
-                    return isInline ? (
-                      <code className="px-1.5 py-0.5 rounded bg-muted text-primary text-sm">{children}</code>
-                    ) : (
-                      <code className="block p-4 rounded-lg bg-muted/50 text-sm overflow-x-auto">{children}</code>
-                    );
-                  },
-                  pre: ({children}) => <pre className="bg-muted/50 rounded-lg p-4 overflow-x-auto">{children}</pre>,
-                  ul: ({children}) => <ul className="list-disc list-inside space-y-1">{children}</ul>,
-                  li: ({children}) => <li className="text-muted-foreground">{children}</li>,
-                }}
-              >
-                {node.description}
-              </ReactMarkdown>
-            </div>
+            <h2 className="text-xl font-semibold mb-4">Overview</h2>
+            <p className="text-muted-foreground">{node.description}</p>
           </div>
 
           {/* Source Files Section */}
@@ -380,10 +189,10 @@ const NodeDetails: React.FC = () => {
               {node.sourceFiles.map((file, index) => (
                 <div 
                   key={index}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer"
+                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
                 >
-                  <code className="text-sm font-mono text-primary">{file}</code>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <ChevronRight className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-mono">{file}</span>
                 </div>
               ))}
             </div>
@@ -398,7 +207,7 @@ const NodeDetails: React.FC = () => {
             
             <div className="space-y-4">
               <Textarea
-                placeholder="Ask anything about this node..."
+                placeholder={`Ask a question about ${node.name}...`}
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 className="min-h-[100px] bg-input/50 border-border/50 resize-none"

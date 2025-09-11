@@ -6,12 +6,14 @@ import { KnowledgeGraph as GraphType, KnowledgeNode, KnowledgeLink } from '@/typ
 interface KnowledgeGraphProps {
   data: GraphType;
   selectedService?: string;
+  highlightNodeId?: string; // For highlighting a specific node
   height?: number;
 }
 
 const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ 
   data, 
   selectedService,
+  highlightNodeId,
   height = 600 
 }) => {
   const navigate = useNavigate();
@@ -22,6 +24,11 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
   const filteredData = data;
 
   const getNodeColor = useCallback((node: KnowledgeNode) => {
+    // Highlight the specific node if provided
+    if (highlightNodeId && node.id === highlightNodeId) {
+      return '#FFD700'; // Gold color for highlighted node
+    }
+    
     switch (node.type) {
       case 'ui':
         return '#00D9FF';
@@ -32,7 +39,7 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
       default:
         return '#666';
     }
-  }, []);
+  }, [highlightNodeId]);
 
   const handleNodeClick = useCallback((node: any) => {
     navigate(`/node/${node.id}`);

@@ -230,168 +230,162 @@ const NodeDetails: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column */}
-          <div className="space-y-6">
-            {/* Relationship Graph */}
-            <div className="glass-card p-6 rounded-xl">
-              <div className="flex items-center gap-2 mb-4">
-                <Network className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold">Relationships</h2>
-              </div>
-              <div className="rounded-lg overflow-hidden">
-                <ForceGraph2D
-                  graphData={relatedGraph}
-                  width={500}
-                  height={300}
-                  nodeCanvasObject={paintNode}
-                  linkCanvasObjectMode={() => 'after'}
-                  linkCanvasObject={drawLinkArrow}
-                  onNodeClick={(clickedNode: any) => {
-                    if (clickedNode.id !== nodeId) {
-                      navigate(`/node/${clickedNode.id}`);
-                    }
-                  }}
-                  linkColor={(link: any) => {
-                    const isHovered = hoveredLink === `${link.source.id}-${link.target.id}`;
-                    return link.type === 'upstream' 
-                      ? (isHovered ? 'rgba(0, 217, 255, 0.5)' : 'rgba(0, 217, 255, 0.3)')
-                      : (isHovered ? 'rgba(184, 51, 255, 0.5)' : 'rgba(184, 51, 255, 0.3)');
-                  }}
-                  linkWidth={2}
-                  linkDirectionalArrowLength={0}
-                  onLinkHover={(link: any) => {
-                    if (link) {
-                      setHoveredLink(`${link.source.id}-${link.target.id}`);
-                    } else {
-                      setHoveredLink(null);
-                    }
-                  }}
-                  linkPointerAreaPaint={(link, color, ctx) => {
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 5;
-                    ctx.beginPath();
-                    ctx.moveTo(link.source.x!, link.source.y!);
-                    ctx.lineTo(link.target.x!, link.target.y!);
-                    ctx.stroke();
-                  }}
-                  backgroundColor="transparent"
-                  enableZoomInteraction={true}
-                  enablePanInteraction={true}
-                  enableNodeDrag={true}
-                />
-              </div>
-              <div className="flex gap-4 mt-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[#00D9FF]"></div>
-                  <span className="text-xs text-muted-foreground">Upstream</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[#B833FF]"></div>
-                  <span className="text-xs text-muted-foreground">Downstream</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[#FFD700]"></div>
-                  <span className="text-xs text-muted-foreground">Current</span>
-                </div>
-              </div>
+      <main className="container mx-auto px-6 py-8 max-w-6xl">
+        <div className="space-y-6">
+          {/* Relationships Section */}
+          <div className="glass-card p-6 rounded-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <Network className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Relationships</h2>
             </div>
-
-            {/* Source Files */}
-            <div className="glass-card p-6 rounded-xl">
-              <div className="flex items-center gap-2 mb-4">
-                <FileCode className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold">Source Files</h2>
+            <div className="rounded-lg overflow-hidden">
+              <ForceGraph2D
+                graphData={relatedGraph}
+                width={window.innerWidth - 100}
+                height={500}
+                nodeCanvasObject={paintNode}
+                linkCanvasObjectMode={() => 'after'}
+                linkCanvasObject={drawLinkArrow}
+                onNodeClick={(clickedNode: any) => {
+                  if (clickedNode.id !== nodeId) {
+                    navigate(`/node/${clickedNode.id}`);
+                  }
+                }}
+                linkColor={(link: any) => {
+                  const isHovered = hoveredLink === `${link.source.id}-${link.target.id}`;
+                  return link.type === 'upstream' 
+                    ? (isHovered ? 'rgba(0, 217, 255, 0.5)' : 'rgba(0, 217, 255, 0.3)')
+                    : (isHovered ? 'rgba(184, 51, 255, 0.5)' : 'rgba(184, 51, 255, 0.3)');
+                }}
+                linkWidth={2}
+                linkDirectionalArrowLength={0}
+                onLinkHover={(link: any) => {
+                  if (link) {
+                    setHoveredLink(`${link.source.id}-${link.target.id}`);
+                  } else {
+                    setHoveredLink(null);
+                  }
+                }}
+                linkPointerAreaPaint={(link, color, ctx) => {
+                  ctx.strokeStyle = color;
+                  ctx.lineWidth = 5;
+                  ctx.beginPath();
+                  ctx.moveTo(link.source.x!, link.source.y!);
+                  ctx.lineTo(link.target.x!, link.target.y!);
+                  ctx.stroke();
+                }}
+                backgroundColor="transparent"
+                enableZoomInteraction={true}
+                enablePanInteraction={true}
+                enableNodeDrag={true}
+              />
+            </div>
+            <div className="flex gap-4 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-[#00D9FF]"></div>
+                <span className="text-xs text-muted-foreground">Upstream</span>
               </div>
-              <div className="space-y-2">
-                {node.sourceFiles.map((file, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer"
-                  >
-                    <code className="text-sm font-mono text-primary">{file}</code>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                ))}
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-[#B833FF]"></div>
+                <span className="text-xs text-muted-foreground">Downstream</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-[#FFD700]"></div>
+                <span className="text-xs text-muted-foreground">Current</span>
               </div>
             </div>
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Description */}
-            <div className="glass-card p-6 rounded-xl">
-              <h2 className="text-xl font-semibold mb-4">Description</h2>
-              <div className="prose prose-invert max-w-none">
-                <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    h1: ({children}) => <h1 className="text-2xl font-bold mt-6 mb-4 gradient-text">{children}</h1>,
-                    h2: ({children}) => <h2 className="text-xl font-semibold mt-4 mb-3">{children}</h2>,
-                    h3: ({children}) => <h3 className="text-lg font-medium mt-3 mb-2">{children}</h3>,
-                    code: ({children, ...props}: any) => {
-                      const isInline = !props.className;
-                      return isInline ? (
-                        <code className="px-1.5 py-0.5 rounded bg-muted text-primary text-sm">{children}</code>
-                      ) : (
-                        <code className="block p-4 rounded-lg bg-muted/50 text-sm overflow-x-auto">{children}</code>
-                      );
-                    },
-                    pre: ({children}) => <pre className="bg-muted/50 rounded-lg p-4 overflow-x-auto">{children}</pre>,
-                    ul: ({children}) => <ul className="list-disc list-inside space-y-1">{children}</ul>,
-                    li: ({children}) => <li className="text-muted-foreground">{children}</li>,
-                  }}
-                >
-                  {node.description}
-                </ReactMarkdown>
-              </div>
+          {/* Description Section */}
+          <div className="glass-card p-6 rounded-xl">
+            <h2 className="text-xl font-semibold mb-4">Description</h2>
+            <div className="prose prose-invert max-w-none">
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({children}) => <h1 className="text-2xl font-bold mt-6 mb-4 gradient-text">{children}</h1>,
+                  h2: ({children}) => <h2 className="text-xl font-semibold mt-4 mb-3">{children}</h2>,
+                  h3: ({children}) => <h3 className="text-lg font-medium mt-3 mb-2">{children}</h3>,
+                  code: ({children, ...props}: any) => {
+                    const isInline = !props.className;
+                    return isInline ? (
+                      <code className="px-1.5 py-0.5 rounded bg-muted text-primary text-sm">{children}</code>
+                    ) : (
+                      <code className="block p-4 rounded-lg bg-muted/50 text-sm overflow-x-auto">{children}</code>
+                    );
+                  },
+                  pre: ({children}) => <pre className="bg-muted/50 rounded-lg p-4 overflow-x-auto">{children}</pre>,
+                  ul: ({children}) => <ul className="list-disc list-inside space-y-1">{children}</ul>,
+                  li: ({children}) => <li className="text-muted-foreground">{children}</li>,
+                }}
+              >
+                {node.description}
+              </ReactMarkdown>
             </div>
+          </div>
 
-            {/* Ask LLM */}
-            <div className="glass-card p-6 rounded-xl">
-              <div className="flex items-center gap-2 mb-4">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold">Ask a Question</h2>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Context</label>
-                  <Select value={context} onValueChange={(v: any) => setContext(v)}>
-                    <SelectTrigger className="bg-input/50 border-border/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover/95 backdrop-blur-xl border-border/50">
-                      <SelectItem value="node-only">This node only</SelectItem>
-                      <SelectItem value="node-and-downstream">Node and downstream dependencies</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Your Question</label>
-                  <Textarea
-                    placeholder="Ask anything about this node..."
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    className="min-h-[100px] bg-input/50 border-border/50 resize-none"
-                  />
-                </div>
-
-                <Button 
-                  onClick={handleAskQuestion}
-                  className="w-full bg-gradient-primary hover:brightness-110"
+          {/* Source Files Section */}
+          <div className="glass-card p-6 rounded-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <FileCode className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Source Files</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {node.sourceFiles.map((file, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer"
                 >
-                  Ask Question
-                </Button>
+                  <code className="text-sm font-mono text-primary">{file}</code>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+              ))}
+            </div>
+          </div>
 
-                {llmResponse && (
-                  <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
-                    <p className="text-sm whitespace-pre-wrap">{llmResponse}</p>
-                  </div>
-                )}
+          {/* Ask a Question Section */}
+          <div className="glass-card p-6 rounded-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <MessageSquare className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Ask a Question</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Context</label>
+                <Select value={context} onValueChange={(v: any) => setContext(v)}>
+                  <SelectTrigger className="bg-input/50 border-border/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover/95 backdrop-blur-xl border-border/50">
+                    <SelectItem value="node-only">This node only</SelectItem>
+                    <SelectItem value="node-and-downstream">Node and downstream dependencies</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Your Question</label>
+                <Textarea
+                  placeholder="Ask anything about this node..."
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  className="min-h-[100px] bg-input/50 border-border/50 resize-none"
+                />
+              </div>
+
+              <Button 
+                onClick={handleAskQuestion}
+                className="w-full bg-gradient-primary hover:brightness-110"
+              >
+                Ask Question
+              </Button>
+
+              {llmResponse && (
+                <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+                  <p className="text-sm whitespace-pre-wrap">{llmResponse}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

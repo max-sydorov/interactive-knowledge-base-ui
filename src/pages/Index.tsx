@@ -24,7 +24,7 @@ const Index: React.FC = () => {
       try {
         setIsLoading(true);
         const [graph, servicesData] = await Promise.all([
-          apiService.getKnowledgeGraph(),
+          apiService.getKnowledgeGraph(selectedService, selectedFlow),
           apiService.getServices()
         ]);
         setGraphData(graph);
@@ -42,7 +42,7 @@ const Index: React.FC = () => {
     };
 
     fetchData();
-  }, [toast]);
+  }, [selectedService, selectedFlow, toast]);
 
   const handleAskQuestion = async () => {
     if (!question.trim()) return;

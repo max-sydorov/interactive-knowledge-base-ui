@@ -23,9 +23,22 @@ class ApiService {
     }
   }
 
-  async getKnowledgeGraph(): Promise<KnowledgeGraph> {
+  async getKnowledgeGraph(service?: string, flow?: string): Promise<KnowledgeGraph> {
+    const params = new URLSearchParams();
+    if (service && service !== 'all') {
+      params.append('service', service);
+    }
+    if (flow && flow !== 'all') {
+      params.append('flow', flow);
+    }
+    
+    const queryString = params.toString();
+    const url = queryString 
+      ? `${API_BASE_URL}/knowledge-graph?${queryString}`
+      : `${API_BASE_URL}/knowledge-graph`;
+    
     return this.fetchWithErrorHandling<KnowledgeGraph>(
-      `${API_BASE_URL}/knowledge-graph`,
+      url,
       mockGraph
     );
   }

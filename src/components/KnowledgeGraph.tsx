@@ -18,36 +18,8 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
   const graphRef = useRef<any>();
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
 
-  const filteredData = useMemo(() => {
-    if (!selectedService || selectedService === 'all') {
-      return data;
-    }
-    
-    const filteredNodes = data.nodes.filter(node => node.service === selectedService);
-    const nodeIds = new Set(filteredNodes.map(n => n.id));
-    const filteredLinks = data.links.filter(
-      link => nodeIds.has(link.source as string) || nodeIds.has(link.target as string)
-    );
-    
-    // Include connected nodes even if from different service
-    filteredLinks.forEach(link => {
-      const sourceNode = data.nodes.find(n => n.id === link.source);
-      const targetNode = data.nodes.find(n => n.id === link.target);
-      if (sourceNode && !nodeIds.has(sourceNode.id)) {
-        filteredNodes.push(sourceNode);
-        nodeIds.add(sourceNode.id);
-      }
-      if (targetNode && !nodeIds.has(targetNode.id)) {
-        filteredNodes.push(targetNode);
-        nodeIds.add(targetNode.id);
-      }
-    });
-    
-    return {
-      nodes: filteredNodes,
-      links: filteredLinks
-    };
-  }, [data, selectedService]);
+  // Data is already filtered by the API, no client-side filtering needed
+  const filteredData = data;
 
   const getNodeColor = useCallback((node: KnowledgeNode) => {
     switch (node.type) {

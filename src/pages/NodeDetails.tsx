@@ -176,8 +176,26 @@ const NodeDetails: React.FC = () => {
           {/* Overview Section */}
           <div className="glass-card p-6 rounded-xl">
             <h2 className="text-xl font-semibold mb-4">Overview</h2>
-            <div className="prose prose-sm max-w-none dark:prose-invert prose-p:text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-code:text-primary prose-pre:bg-muted prose-pre:border prose-pre:border-border">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <div className="prose prose-sm max-w-none dark:prose-invert">
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({children}) => <h1 className="text-2xl font-bold mt-6 mb-4 gradient-text">{children}</h1>,
+                  h2: ({children}) => <h2 className="text-xl font-semibold mt-4 mb-3">{children}</h2>,
+                  h3: ({children}) => <h3 className="text-lg font-medium mt-3 mb-2">{children}</h3>,
+                  code: ({children, ...props}: any) => {
+                    const isInline = !props.className;
+                    return isInline ? (
+                      <code className="px-1.5 py-0.5 rounded bg-muted text-primary text-sm">{children}</code>
+                    ) : (
+                      <code className="block p-4 rounded-lg bg-muted/50 text-sm overflow-x-auto">{children}</code>
+                    );
+                  },
+                  pre: ({children}) => <pre className="bg-muted/50 rounded-lg p-4 overflow-x-auto">{children}</pre>,
+                  ul: ({children}) => <ul className="list-disc list-inside space-y-1">{children}</ul>,
+                  li: ({children}) => <li className="text-muted-foreground">{children}</li>,
+                }}
+              >
                 {node.description}
               </ReactMarkdown>
             </div>

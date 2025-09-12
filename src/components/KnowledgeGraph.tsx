@@ -69,8 +69,9 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
     // Reset shadow for text
     ctx.shadowBlur = 0;
     
-    // Draw node details on hover
+    // Draw node details based on hover state
     if (hoveredNode === node.id) {
+      // On hover: show detailed info
       const fontSize = 12 / globalScale;
       const detailFontSize = 10 / globalScale;
       
@@ -129,6 +130,27 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
       // Type text with node color
       ctx.fillStyle = getNodeColor(node);
       ctx.fillText(typeText, node.x, node.y + 55 + detailFontSize / 2 + 3);
+    } else {
+      // Not hovering: show simple label
+      const fontSize = 12 / globalScale;
+      ctx.font = `${fontSize}px Inter, sans-serif`;
+      const textWidth = ctx.measureText(node.name).width;
+      const bckgDimensions = [textWidth + 10, fontSize + 8];
+      
+      // Draw label background
+      ctx.fillStyle = 'rgba(4, 7, 20, 0.9)';
+      ctx.fillRect(
+        node.x - bckgDimensions[0] / 2,
+        node.y + 12,
+        bckgDimensions[0],
+        bckgDimensions[1]
+      );
+      
+      // Draw label text
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#fff';
+      ctx.fillText(node.name, node.x, node.y + 12 + fontSize / 2 + 4);
     }
   }, [getNodeColor, hoveredNode]);
 

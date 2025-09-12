@@ -87,20 +87,28 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
     
     if (!start.x || !start.y || !end.x || !end.y) return;
 
-    // Calculate arrow position (midpoint)
-    const midX = (start.x + end.x) / 2;
-    const midY = (start.y + end.y) / 2;
+    // Calculate arrow position at the edge of target node (accounting for node radius)
+    const nodeRadius = 8;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Normalize and calculate arrow position at edge of target node
+    const normX = dx / distance;
+    const normY = dy / distance;
+    const arrowX = end.x - normX * nodeRadius;
+    const arrowY = end.y - normY * nodeRadius;
     
     // Calculate arrow angle
-    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+    const angle = Math.atan2(dy, dx);
     
-    // Arrow size
-    const arrowLength = 10 / Math.sqrt(globalScale);
-    const arrowWidth = 6 / Math.sqrt(globalScale);
+    // Arrow size (narrower)
+    const arrowLength = 8 / Math.sqrt(globalScale);
+    const arrowWidth = 3 / Math.sqrt(globalScale);
     
     // Draw arrow
     ctx.save();
-    ctx.translate(midX, midY);
+    ctx.translate(arrowX, arrowY);
     ctx.rotate(angle);
     
     ctx.fillStyle = hoveredLink === `${link.source.id}-${link.target.id}` 
@@ -118,6 +126,10 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
 
     // Draw relationship type on hover
     if (hoveredLink === `${link.source.id}-${link.target.id}` && link.relationshipType) {
+      // Calculate midpoint for text position
+      const midX = (start.x + end.x) / 2;
+      const midY = (start.y + end.y) / 2;
+      
       const fontSize = 11 / globalScale;
       ctx.font = `${fontSize}px Inter, sans-serif`;
       const textWidth = ctx.measureText(link.relationshipType).width;

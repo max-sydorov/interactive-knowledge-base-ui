@@ -270,8 +270,6 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
         cooldownTime={3000}
         d3AlphaDecay={0.01}
         d3VelocityDecay={0.2}
-        dagMode={'lr'}
-        dagLevelDistance={100}
       />
       
       {/* Legend */}

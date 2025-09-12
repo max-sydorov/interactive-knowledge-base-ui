@@ -21,11 +21,40 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
-  // Configure force simulation to increase distance between nodes
+  // Configure force simulation to group nodes by service
   useEffect(() => {
     if (graphRef.current) {
       graphRef.current.d3Force('link').distance(40);
       graphRef.current.d3Force('charge').strength(-150);
+      
+      // Add clustering force to group nodes by service
+      const serviceGroups = new Map<string, { x: number, y: number, count: number }>();
+      
+      // First pass: calculate service group centers
+      data.nodes.forEach((node: any) => {
+        if (!serviceGroups.has(node.service)) {
+          serviceGroups.set(node.service, { x: 0, y: 0, count: 0 });
+        }
+        const group = serviceGroups.get(node.service)!;
+        group.count++;
+      });
+      
+      // Create a vertical clustering force for service grouping
+      graphRef.current.d3Force('cluster', (alpha: number) => {
+        const strength = 0.15;
+        data.nodes.forEach((node: any) => {
+          // Group nodes vertically by service
+          const serviceIndex = Array.from(serviceGroups.keys()).indexOf(node.service);
+          const totalServices = serviceGroups.size;
+          const targetY = (serviceIndex - totalServices / 2) * 50;
+          
+          // Apply force towards target Y position
+          if (node.y !== undefined) {
+            node.vy = node.vy || 0;
+            node.vy += (targetY - node.y) * strength * alpha;
+          }
+        });
+      });
     }
   }, [data]);
 

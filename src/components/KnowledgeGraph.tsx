@@ -242,6 +242,7 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
         onNodeHover={(node: any) => {
           setHoveredNode(node ? node.id : null);
         }}
+        nodeLabel={() => ''}
         linkCanvasObjectMode={() => 'after'}
         linkCanvasObject={drawLinkArrow}
         linkColor={() => hoveredLink ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.3)'}

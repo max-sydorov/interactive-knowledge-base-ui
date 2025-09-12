@@ -55,12 +55,6 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
   }, [navigate]);
 
   const paintNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const label = node.name;
-    const fontSize = 12 / globalScale;
-    ctx.font = `${fontSize}px Inter, sans-serif`;
-    const textWidth = ctx.measureText(label).width;
-    const bckgDimensions = [textWidth + 10, fontSize + 8];
-
     // Draw glow effect
     ctx.shadowColor = getNodeColor(node);
     ctx.shadowBlur = 20;
@@ -75,53 +69,66 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
     // Reset shadow for text
     ctx.shadowBlur = 0;
     
-    // Draw label background
-    ctx.fillStyle = 'rgba(4, 7, 20, 0.9)';
-    ctx.fillRect(
-      node.x - bckgDimensions[0] / 2,
-      node.y + 12,
-      bckgDimensions[0],
-      bckgDimensions[1]
-    );
-    
-    // Draw label text
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#fff';
-    ctx.fillText(label, node.x, node.y + 12 + fontSize / 2 + 4);
-    
-    // Draw service and type on hover
+    // Draw node details on hover
     if (hoveredNode === node.id) {
+      const fontSize = 12 / globalScale;
       const detailFontSize = 10 / globalScale;
+      
+      // Node name
+      ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const nameWidth = ctx.measureText(node.name).width;
+      
+      // Background for name
+      ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
+      ctx.fillRect(
+        node.x - nameWidth / 2 - 8,
+        node.y + 20,
+        nameWidth + 16,
+        fontSize + 10
+      );
+      
+      // Name text
+      ctx.fillStyle = '#fff';
+      ctx.fillText(node.name, node.x, node.y + 20 + fontSize / 2 + 5);
+      
+      // Service and Type
       ctx.font = `${detailFontSize}px Inter, sans-serif`;
       
-      // Service badge
-      const serviceText = node.service;
-      const typeText = node.type.charAt(0).toUpperCase() + node.type.slice(1);
+      // Service text
+      const serviceText = `Service: ${node.service}`;
       const serviceWidth = ctx.measureText(serviceText).width;
-      const typeWidth = ctx.measureText(typeText).width;
       
-      // Draw service
+      // Background for service
       ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
       ctx.fillRect(
         node.x - serviceWidth / 2 - 6,
-        node.y - 25,
+        node.y + 40,
         serviceWidth + 12,
         detailFontSize + 6
       );
-      ctx.fillStyle = '#fff';
-      ctx.fillText(serviceText, node.x, node.y - 25 + detailFontSize / 2 + 3);
       
-      // Draw type
+      // Service text
+      ctx.fillStyle = '#a1a1aa';
+      ctx.fillText(serviceText, node.x, node.y + 40 + detailFontSize / 2 + 3);
+      
+      // Type text
+      const typeText = `Type: ${node.type.charAt(0).toUpperCase() + node.type.slice(1)}`;
+      const typeWidth = ctx.measureText(typeText).width;
+      
+      // Background for type
       ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
       ctx.fillRect(
         node.x - typeWidth / 2 - 6,
-        node.y - 40,
+        node.y + 55,
         typeWidth + 12,
         detailFontSize + 6
       );
+      
+      // Type text with node color
       ctx.fillStyle = getNodeColor(node);
-      ctx.fillText(typeText, node.x, node.y - 40 + detailFontSize / 2 + 3);
+      ctx.fillText(typeText, node.x, node.y + 55 + detailFontSize / 2 + 3);
     }
   }, [getNodeColor, hoveredNode]);
 

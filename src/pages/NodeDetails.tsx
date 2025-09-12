@@ -144,8 +144,8 @@ const NodeDetails: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="glass-card px-3 py-1 rounded-full">{node.service}</span>
               <span className="glass-card px-3 py-1 rounded-full capitalize">{node.type}</span>
+              <span className="glass-card px-3 py-1 rounded-full">{node.service}</span>
             </div>
           </div>
         </div>

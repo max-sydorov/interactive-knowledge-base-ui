@@ -19,6 +19,7 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
   const navigate = useNavigate();
   const graphRef = useRef<any>();
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
   // Configure force simulation to increase distance between nodes
   useEffect(() => {
@@ -64,10 +65,11 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
     ctx.shadowColor = getNodeColor(node);
     ctx.shadowBlur = 20;
     
-    // Draw node circle
+    // Draw node circle (slightly larger on hover)
+    const nodeRadius = hoveredNode === node.id ? 10 : 8;
     ctx.fillStyle = getNodeColor(node);
     ctx.beginPath();
-    ctx.arc(node.x, node.y, 8, 0, 2 * Math.PI);
+    ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI);
     ctx.fill();
     
     // Reset shadow for text
@@ -87,7 +89,41 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#fff';
     ctx.fillText(label, node.x, node.y + 12 + fontSize / 2 + 4);
-  }, [getNodeColor]);
+    
+    // Draw service and type on hover
+    if (hoveredNode === node.id) {
+      const detailFontSize = 10 / globalScale;
+      ctx.font = `${detailFontSize}px Inter, sans-serif`;
+      
+      // Service badge
+      const serviceText = node.service;
+      const typeText = node.type.charAt(0).toUpperCase() + node.type.slice(1);
+      const serviceWidth = ctx.measureText(serviceText).width;
+      const typeWidth = ctx.measureText(typeText).width;
+      
+      // Draw service
+      ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
+      ctx.fillRect(
+        node.x - serviceWidth / 2 - 6,
+        node.y - 25,
+        serviceWidth + 12,
+        detailFontSize + 6
+      );
+      ctx.fillStyle = '#fff';
+      ctx.fillText(serviceText, node.x, node.y - 25 + detailFontSize / 2 + 3);
+      
+      // Draw type
+      ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
+      ctx.fillRect(
+        node.x - typeWidth / 2 - 6,
+        node.y - 40,
+        typeWidth + 12,
+        detailFontSize + 6
+      );
+      ctx.fillStyle = getNodeColor(node);
+      ctx.fillText(typeText, node.x, node.y - 40 + detailFontSize / 2 + 3);
+    }
+  }, [getNodeColor, hoveredNode]);
 
   const drawLinkArrow = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const start = link.source;
@@ -174,6 +210,9 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
           ctx.fill();
         }}
         onNodeClick={handleNodeClick}
+        onNodeHover={(node: any) => {
+          setHoveredNode(node ? node.id : null);
+        }}
         linkCanvasObjectMode={() => 'after'}
         linkCanvasObject={drawLinkArrow}
         linkColor={() => hoveredLink ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.3)'}

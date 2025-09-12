@@ -54,6 +54,21 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
     navigate(`/node/${node.id}`);
   }, [navigate]);
 
+  const handleNodeDragEnd = useCallback((node: any) => {
+    // Fix the node position after dragging
+    node.fx = node.x;
+    node.fy = node.y;
+  }, []);
+
+  const handleNodeRightClick = useCallback((node: any) => {
+    // Unfix the node position on right click
+    node.fx = undefined;
+    node.fy = undefined;
+    if (graphRef.current) {
+      graphRef.current.d3ReheatSimulation();
+    }
+  }, []);
+
   const paintNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
     // Draw glow effect
     ctx.shadowColor = getNodeColor(node);
@@ -239,6 +254,8 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
           ctx.fill();
         }}
         onNodeClick={handleNodeClick}
+        onNodeDragEnd={handleNodeDragEnd}
+        onNodeRightClick={handleNodeRightClick}
         onNodeHover={(node: any) => {
           setHoveredNode(node ? node.id : null);
         }}

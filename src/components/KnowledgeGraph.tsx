@@ -26,9 +26,6 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
     if (graphRef.current) {
       graphRef.current.d3Force('link').distance(75);
       graphRef.current.d3Force('charge').strength(-250);
-      // Set up DAG positioning
-      graphRef.current.d3Force('x').strength(0.3);
-      graphRef.current.d3Force('y').strength(0.1);
     }
   }, [data]);
 
@@ -273,9 +270,6 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
         cooldownTime={3000}
         d3AlphaDecay={0.01}
         d3VelocityDecay={0.2}
-        dagMode={'lr'}
-        dagLevelDistance={150}
-        dagNodeFilter={(node: any) => true}
       />
       
       {/* Legend */}

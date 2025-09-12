@@ -24,8 +24,8 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
   // Configure force simulation to increase distance between nodes
   useEffect(() => {
     if (graphRef.current) {
-      graphRef.current.d3Force('link').distance(75);
-      graphRef.current.d3Force('charge').strength(-250);
+      graphRef.current.d3Force('link').distance(40);
+      graphRef.current.d3Force('charge').strength(-150);
     }
   }, [data]);
 
@@ -271,7 +271,7 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
         d3AlphaDecay={0.01}
         d3VelocityDecay={0.2}
         dagMode={'lr'}
-        dagLevelDistance={200}
+        dagLevelDistance={100}
       />
       
       {/* Legend */}

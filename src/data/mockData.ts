@@ -232,7 +232,6 @@ Stores user notifications and delivery status.`,
     // API to API connections
     { source: 'api-users', target: 'api-auth', relationshipType: 'verifies token' },
     { source: 'api-users', target: 'api-notifications', relationshipType: 'triggers' },
-    { source: 'api-auth', target: 'api-users', relationshipType: 'fetches user' },
     { source: 'api-metrics', target: 'api-users', relationshipType: 'enriches data' },
     
     // API to Database Table connections

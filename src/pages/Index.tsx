@@ -120,23 +120,11 @@ const Index: React.FC = () => {
             <div className="glass-card p-6 rounded-xl hover-glow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Nodes</p>
+                  <p className="text-sm text-muted-foreground">Nodes</p>
                   <p className="text-3xl font-bold text-primary">{graphData?.nodes.length || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
                   <div className="w-6 h-6 rounded-full bg-primary node-glow-ui"></div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="glass-card p-6 rounded-xl hover-glow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Services</p>
-                  <p className="text-3xl font-bold text-secondary">{services.length}</p>
-                </div>
-                <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center">
-                  <div className="w-6 h-6 rounded-full bg-secondary node-glow-api"></div>
                 </div>
               </div>
             </div>
@@ -149,6 +137,18 @@ const Index: React.FC = () => {
                 </div>
                 <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
                   <div className="w-6 h-6 rounded-full bg-accent node-glow-database"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="glass-card p-6 rounded-xl hover-glow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Services</p>
+                  <p className="text-3xl font-bold text-secondary">{services.length}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full bg-secondary node-glow-api"></div>
                 </div>
               </div>
             </div>

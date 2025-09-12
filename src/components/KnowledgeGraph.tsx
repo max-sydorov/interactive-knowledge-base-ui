@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useMemo, useState } from 'react';
+import React, { useRef, useCallback, useMemo, useState, useEffect } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import { useNavigate } from 'react-router-dom';
 import { KnowledgeGraph as GraphType, KnowledgeNode, KnowledgeLink } from '@/types/knowledge';
@@ -19,6 +19,14 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
   const navigate = useNavigate();
   const graphRef = useRef<any>();
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
+
+  // Configure force simulation to increase distance between nodes
+  useEffect(() => {
+    if (graphRef.current) {
+      graphRef.current.d3Force('link').distance(150);
+      graphRef.current.d3Force('charge').strength(-500);
+    }
+  }, [data]);
 
   // Data is already filtered by the API, no client-side filtering needed
   const filteredData = data;
@@ -190,9 +198,9 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
         enableZoomInteraction={true}
         enablePanInteraction={true}
         enableNodeDrag={true}
-        cooldownTime={1000}
-        d3AlphaDecay={0.02}
-        d3VelocityDecay={0.3}
+        cooldownTime={3000}
+        d3AlphaDecay={0.01}
+        d3VelocityDecay={0.2}
       />
       
       {/* Legend */}

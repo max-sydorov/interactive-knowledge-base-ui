@@ -176,7 +176,11 @@ const NodeDetails: React.FC = () => {
           {/* Overview Section */}
           <div className="glass-card p-6 rounded-xl">
             <h2 className="text-xl font-semibold mb-4">Overview</h2>
-            <p className="text-muted-foreground">{node.description}</p>
+            <div className="prose prose-sm max-w-none dark:prose-invert prose-p:text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-code:text-primary prose-pre:bg-muted prose-pre:border prose-pre:border-border">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {node.description}
+              </ReactMarkdown>
+            </div>
           </div>
 
           {/* Source Files Section */}

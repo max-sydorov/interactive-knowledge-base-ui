@@ -7,6 +7,8 @@ import { Network } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const Index: React.FC = () => {
   const [selectedService, setSelectedService] = useState('all');
@@ -211,7 +213,31 @@ const Index: React.FC = () => {
                     <p className="text-sm text-muted-foreground animate-pulse">Thinking...</p>
                   )}
                   {llmResponse && (
-                    <p className="text-sm whitespace-pre-wrap">{llmResponse}</p>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          h1: ({children}) => <h1 className="text-xl font-bold mt-4 mb-3">{children}</h1>,
+                          h2: ({children}) => <h2 className="text-lg font-semibold mt-3 mb-2">{children}</h2>,
+                          h3: ({children}) => <h3 className="text-base font-medium mt-2 mb-1">{children}</h3>,
+                          code: ({children, ...props}: any) => {
+                            const isInline = !props.className;
+                            return isInline ? (
+                              <code className="px-1.5 py-0.5 rounded bg-muted text-primary text-sm">{children}</code>
+                            ) : (
+                              <code className="block p-3 rounded-lg bg-muted/50 text-sm overflow-x-auto">{children}</code>
+                            );
+                          },
+                          pre: ({children}) => <pre className="bg-muted/50 rounded-lg overflow-x-auto">{children}</pre>,
+                          ul: ({children}) => <ul className="list-disc list-inside space-y-1">{children}</ul>,
+                          ol: ({children}) => <ol className="list-decimal list-inside space-y-1">{children}</ol>,
+                          li: ({children}) => <li className="text-sm">{children}</li>,
+                          p: ({children}) => <p className="text-sm mb-2">{children}</p>,
+                        }}
+                      >
+                        {llmResponse}
+                      </ReactMarkdown>
+                    </div>
                   )}
                 </div>
               )}

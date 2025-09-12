@@ -97,8 +97,8 @@ const Index: React.FC = () => {
             <div className="flex items-center gap-3">
               <Network className="w-8 h-8 text-primary" />
               <div>
-                <h1 className="text-2xl font-bold gradient-text">Knowledge Base</h1>
-                <p className="text-sm text-muted-foreground">Interactive System Architecture</p>
+                <h1 className="text-2xl font-bold gradient-text">OnDeck Knowledge Base</h1>
+                <p className="text-sm text-muted-foreground">Interactive System Overview</p>
               </div>
             </div>
             <ServiceFilter 

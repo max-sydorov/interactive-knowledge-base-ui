@@ -157,7 +157,13 @@ const Index: React.FC = () => {
           {/* Graph */}
           <div className="glass-card p-6 rounded-xl">
             <div className="mb-4">
-              <h2 className="text-xl font-semibold">System Architecture Graph</h2>
+              <h2 className="text-xl font-semibold">
+                {selectedFlow !== 'all' 
+                  ? `${selectedFlow} Flow Graph`
+                  : selectedService !== 'all'
+                    ? `${selectedService} Overview Graph`
+                    : 'System Overview Graph'}
+              </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Click on any node to view detailed information and relationships
               </p>

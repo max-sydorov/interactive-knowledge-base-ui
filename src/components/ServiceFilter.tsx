@@ -4,20 +4,16 @@ import { Filter } from 'lucide-react';
 
 interface ServiceFilterProps {
   services: string[];
+  flows: Array<{ value: string; label: string }>;
   selectedService: string;
   onServiceChange: (service: string) => void;
   selectedFlow?: string;
   onFlowChange?: (flow: string) => void;
 }
 
-const flows = [
-  { value: 'all', label: 'All flows' },
-  { value: 'merchant-intake', label: 'Merchant Application Intake Experience' },
-  { value: 'basic-info', label: 'Basic Info flow' }
-];
-
 const ServiceFilter: React.FC<ServiceFilterProps> = ({ 
   services, 
+  flows,
   selectedService, 
   onServiceChange,
   selectedFlow = 'all',

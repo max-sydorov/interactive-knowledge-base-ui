@@ -18,6 +18,7 @@ const Index: React.FC = () => {
   const [isThinking, setIsThinking] = useState(false);
   const [graphData, setGraphData] = useState<KnowledgeGraphType | null>(null);
   const [services, setServices] = useState<string[]>([]);
+  const [flows, setFlows] = useState<Array<{ value: string; label: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -25,12 +26,14 @@ const Index: React.FC = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [graph, servicesData] = await Promise.all([
+        const [graph, servicesData, flowsData] = await Promise.all([
           apiService.getKnowledgeGraph(selectedService, selectedFlow),
-          apiService.getServices()
+          apiService.getServices(),
+          apiService.getFlows()
         ]);
         setGraphData(graph);
         setServices(servicesData);
+        setFlows(flowsData);
       } catch (error) {
         console.error('Failed to fetch data:', error);
         toast({
@@ -105,6 +108,7 @@ const Index: React.FC = () => {
             </div>
             <ServiceFilter 
               services={services}
+              flows={flows}
               selectedService={selectedService}
               onServiceChange={setSelectedService}
               selectedFlow={selectedFlow}

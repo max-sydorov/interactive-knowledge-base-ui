@@ -165,7 +165,7 @@ const Index: React.FC = () => {
             <div className="mb-4">
               <h2 className="text-xl font-semibold">
                 {selectedFlow !== 'all' 
-                  ? `${selectedFlow} Flow Graph`
+                  ? `${flows.find(f => f.value === selectedFlow)?.label || selectedFlow} Graph`
                   : selectedService !== 'all'
                     ? `${selectedService} Overview Graph`
                     : 'System Overview Graph'}

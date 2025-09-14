@@ -224,6 +224,7 @@ const Index: React.FC = () => {
                           h1: ({children}) => <h1 className="text-xl font-bold mt-4 mb-3">{children}</h1>,
                           h2: ({children}) => <h2 className="text-lg font-semibold mt-3 mb-2">{children}</h2>,
                           h3: ({children}) => <h3 className="text-base font-medium mt-2 mb-1">{children}</h3>,
+                          h4: ({children}) => <h4 className="text-sm font-medium mt-2 mb-1">{children}</h4>,
                           code: ({children, ...props}: any) => {
                             const isInline = !props.className;
                             return isInline ? (

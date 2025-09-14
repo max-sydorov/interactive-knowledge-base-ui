@@ -2,6 +2,8 @@ import React, { useRef, useCallback, useMemo, useState, useEffect } from 'react'
 import ForceGraph2D from 'react-force-graph-2d';
 import { useNavigate } from 'react-router-dom';
 import { KnowledgeGraph as GraphType, KnowledgeNode, KnowledgeLink } from '@/types/knowledge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface KnowledgeGraphProps {
   data: GraphType;
@@ -20,6 +22,7 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
   const graphRef = useRef<any>();
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [isDagMode, setIsDagMode] = useState(false);
 
   // Configure force simulation to increase distance between nodes
   useEffect(() => {
@@ -229,7 +232,7 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
         cooldownTime={3000}
         d3AlphaDecay={0.01}
         d3VelocityDecay={0.2}
-        dagMode={'lr'}
+        dagMode={isDagMode ? 'lr' : undefined}
         dagLevelDistance={100}
         onRenderFramePost={(ctx, globalScale) => {
           // Draw hover labels on top of everything
@@ -298,6 +301,18 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
           }
         }}
       />
+      
+      {/* Layout Switcher */}
+      <div className="absolute top-4 right-4 flex items-center gap-2 p-3 glass-card rounded-lg">
+        <Label htmlFor="layout-mode" className="text-xs text-muted-foreground">
+          Hierarchical Layout
+        </Label>
+        <Switch
+          id="layout-mode"
+          checked={isDagMode}
+          onCheckedChange={setIsDagMode}
+        />
+      </div>
       
       {/* Legend */}
       <div className="absolute bottom-4 left-4 flex gap-4 p-3 glass-card rounded-lg">

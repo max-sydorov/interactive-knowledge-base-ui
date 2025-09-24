@@ -1,44 +1,154 @@
-import React, { useRef, useCallback, useMemo, useState, useEffect } from 'react';
-import ForceGraph2D from 'react-force-graph-2d';
+import React, { useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ReactFlow } from '@xyflow/react';
+import {
+  Node,
+  Edge,
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+  Handle,
+  Position,
+  MarkerType,
+  NodeProps,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { KnowledgeGraph as GraphType, KnowledgeNode, KnowledgeLink } from '@/types/knowledge';
 
 interface KnowledgeGraphProps {
   data: GraphType;
   selectedService?: string;
-  highlightNodeId?: string; // For highlighting a specific node
+  highlightNodeId?: string;
   height?: number;
 }
 
-const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ 
-  data, 
+// Custom node component
+const CustomNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
+  const getNodeColor = (type: string) => {
+    switch (type) {
+      case 'ui':
+        return '#00D9FF';
+      case 'api':
+        return '#B833FF';
+      case 'database':
+        return '#3B82F6';
+      default:
+        return 'hsl(var(--muted-foreground))';
+    }
+  };
+
+  const nodeColor = data.isHighlighted ? '#FFD700' : getNodeColor(data.type as string);
+
+  return (
+    <div
+      className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
+        data.isHighlighted ? 'ring-4 ring-yellow-400/30 scale-110' : ''
+      } ${selected ? 'ring-2 ring-primary' : ''}`}
+      style={{
+        backgroundColor: `${nodeColor}20`,
+        borderColor: nodeColor,
+        minWidth: '120px',
+        boxShadow: `0 0 20px ${nodeColor}80`,
+      }}
+    >
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <div className="text-center">
+        <div className="font-semibold text-sm text-white">
+          {data.label as string}
+        </div>
+        {data.service && (
+          <div className="text-xs text-muted-foreground mt-1">{data.service as string}</div>
+        )}
+        <div className="text-xs" style={{ color: nodeColor }}>
+          {data.displayType as string}
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+    </div>
+  );
+};
+
+const nodeTypes = {
+  custom: CustomNode,
+};
+
+const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
+  data,
   selectedService,
   highlightNodeId,
-  height = 600 
+  height = 600,
 }) => {
   const navigate = useNavigate();
-  const graphRef = useRef<any>();
-  const [hoveredLink, setHoveredLink] = useState<string | null>(null);
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
-  // Configure force simulation to increase distance between nodes
+  // Convert data to React Flow format
+  const { flowNodes, flowEdges } = useMemo(() => {
+    const nodes: Node[] = data.nodes.map((node, index) => {
+      const angle = (2 * Math.PI * index) / data.nodes.length;
+      const radius = 250;
+      const x = radius * Math.cos(angle);
+      const y = radius * Math.sin(angle);
+
+      return {
+        id: node.id,
+        type: 'custom',
+        position: { x, y },
+        data: {
+          label: node.name,
+          type: node.type,
+          service: node.service,
+          displayType: node.type === 'ui' ? 'UI View' : 
+                       node.type === 'api' ? 'API Endpoint' : 
+                       node.type === 'database' ? 'Database Table' : 
+                       (node.type as string).charAt(0).toUpperCase() + (node.type as string).slice(1),
+          isHighlighted: highlightNodeId === node.id,
+          originalNode: node,
+        },
+      };
+    });
+
+    const edges: Edge[] = data.links.map((link) => ({
+      id: `${link.source}-${link.target}`,
+      source: link.source,
+      target: link.target,
+      label: link.relationshipType,
+      labelStyle: { fontSize: 10, fontWeight: 500, fill: '#fff' },
+      labelBgStyle: { fill: 'rgba(4, 7, 20, 0.95)', fillOpacity: 0.9 },
+      animated: selectedService ? 
+        (data.nodes.find(n => n.id === link.source)?.service === selectedService ||
+         data.nodes.find(n => n.id === link.target)?.service === selectedService) : false,
+      style: {
+        stroke: 'rgba(100, 116, 139, 0.6)',
+        strokeWidth: 2,
+      },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 20,
+        height: 20,
+        color: 'rgba(100, 116, 139, 0.6)',
+      },
+    }));
+
+    return { flowNodes: nodes, flowEdges: edges };
+  }, [data, selectedService, highlightNodeId]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
+
+  // Update nodes when data changes
   useEffect(() => {
-    if (graphRef.current) {
-      graphRef.current.d3Force('link').distance(40);
-      graphRef.current.d3Force('charge').strength(-150);
-    }
-  }, [data]);
+    setNodes(flowNodes);
+    setEdges(flowEdges);
+  }, [flowNodes, flowEdges, setNodes, setEdges]);
 
-  // Data is already filtered by the API, no client-side filtering needed
-  const filteredData = data;
+  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    navigate(`/node/${node.id}`);
+  }, [navigate]);
 
-  const getNodeColor = useCallback((node: KnowledgeNode) => {
-    // Highlight the specific node if provided
-    if (highlightNodeId && node.id === highlightNodeId) {
-      return '#FFD700'; // Gold color for highlighted node
-    }
-    
-    switch (node.type) {
+  const nodeColor = useCallback((node: Node) => {
+    if (node.data.isHighlighted) return '#FFD700';
+    switch (node.data.type) {
       case 'ui':
         return '#00D9FF';
       case 'api':
@@ -48,256 +158,34 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
       default:
         return '#666';
     }
-  }, [highlightNodeId]);
-
-  const handleNodeClick = useCallback((node: any) => {
-    navigate(`/node/${node.id}`);
-  }, [navigate]);
-
-  const handleNodeDragEnd = useCallback((node: any) => {
-    // Fix the node position after dragging
-    node.fx = node.x;
-    node.fy = node.y;
   }, []);
-
-  const handleNodeRightClick = useCallback((node: any) => {
-    // Unfix the node position on right click
-    node.fx = undefined;
-    node.fy = undefined;
-    if (graphRef.current) {
-      graphRef.current.d3ReheatSimulation();
-    }
-  }, []);
-
-  const paintNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    // Draw glow effect
-    ctx.shadowColor = getNodeColor(node);
-    ctx.shadowBlur = 20;
-    
-    // Draw node circle (slightly larger on hover)
-    const nodeRadius = hoveredNode === node.id ? 10 : 8;
-    ctx.fillStyle = getNodeColor(node);
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Reset shadow for text
-    ctx.shadowBlur = 0;
-    
-    // Only draw simple labels for non-hovered nodes
-    // Hovered node labels are drawn on top with onRenderFramePost
-    if (hoveredNode !== node.id) {
-      // Not hovering: show simple label
-      const fontSize = 12 / globalScale;
-      ctx.font = `${fontSize}px Inter, sans-serif`;
-      const textWidth = ctx.measureText(node.name).width;
-      const bckgDimensions = [textWidth + 10, fontSize + 8];
-      
-      // Draw label background
-      ctx.fillStyle = 'rgba(4, 7, 20, 0.9)';
-      ctx.fillRect(
-        node.x - bckgDimensions[0] / 2,
-        node.y + 12,
-        bckgDimensions[0],
-        bckgDimensions[1]
-      );
-      
-      // Draw label text
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#fff';
-      ctx.fillText(node.name, node.x, node.y + 12 + fontSize / 2 + 4);
-    }
-  }, [getNodeColor, hoveredNode]);
-
-  const drawLinkArrow = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const start = link.source;
-    const end = link.target;
-    
-    if (!start.x || !start.y || !end.x || !end.y) return;
-
-    // Calculate arrow position at the edge of target node (accounting for node radius)
-    const nodeRadius = 8;
-    const dx = end.x - start.x;
-    const dy = end.y - start.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    // Normalize and calculate arrow position at edge of target node
-    const normX = dx / distance;
-    const normY = dy / distance;
-    const arrowX = end.x - normX * nodeRadius;
-    const arrowY = end.y - normY * nodeRadius;
-    
-    // Calculate arrow angle
-    const angle = Math.atan2(dy, dx);
-    
-    // Arrow size (narrower)
-    const arrowLength = 8 / Math.sqrt(globalScale);
-    const arrowWidth = 3 / Math.sqrt(globalScale);
-    
-    // Draw arrow
-    ctx.save();
-    ctx.translate(arrowX, arrowY);
-    ctx.rotate(angle);
-    
-    ctx.fillStyle = hoveredLink === `${link.source.id}-${link.target.id}` 
-      ? 'rgba(255, 255, 255, 0.9)' 
-      : 'rgba(100, 116, 139, 0.6)';
-    
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-arrowLength, -arrowWidth);
-    ctx.lineTo(-arrowLength, arrowWidth);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.restore();
-
-    // Draw relationship type on hover
-    if (hoveredLink === `${link.source.id}-${link.target.id}` && link.relationshipType) {
-      // Calculate midpoint for text position
-      const midX = (start.x + end.x) / 2;
-      const midY = (start.y + end.y) / 2;
-      
-      const fontSize = 11 / globalScale;
-      ctx.font = `${fontSize}px Inter, sans-serif`;
-      const textWidth = ctx.measureText(link.relationshipType).width;
-      
-      // Background for text
-      ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
-      ctx.fillRect(
-        midX - textWidth / 2 - 6,
-        midY - fontSize / 2 - 6,
-        textWidth + 12,
-        fontSize + 12
-      );
-      
-      // Relationship text
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(link.relationshipType, midX, midY);
-    }
-  }, [hoveredLink]);
 
   return (
-    <div className="relative w-full rounded-xl overflow-hidden glass-card">
-      <ForceGraph2D
-        ref={graphRef}
-        graphData={filteredData}
-        width={window.innerWidth - 100}
-        height={height}
-        nodeCanvasObject={paintNode}
-        nodeCanvasObjectMode={() => 'after'}
-        nodePointerAreaPaint={(node, color, ctx) => {
-          ctx.fillStyle = color;
-          ctx.beginPath();
-          ctx.arc(node.x!, node.y!, 10, 0, 2 * Math.PI);
-          ctx.fill();
-        }}
-        onNodeClick={handleNodeClick}
-        onNodeDragEnd={handleNodeDragEnd}
-        onNodeRightClick={handleNodeRightClick}
-        onNodeHover={(node: any) => {
-          setHoveredNode(node ? node.id : null);
-        }}
-        nodeLabel={() => ''}
-        linkCanvasObjectMode={() => 'after'}
-        linkCanvasObject={drawLinkArrow}
-        linkColor={() => hoveredLink ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.3)'}
-        linkWidth={2}
-        linkDirectionalArrowLength={0} // We draw custom arrows
-        onLinkHover={(link: any) => {
-          if (link) {
-            setHoveredLink(`${link.source.id}-${link.target.id}`);
-          } else {
-            setHoveredLink(null);
-          }
-        }}
-        linkPointerAreaPaint={(link, color, ctx) => {
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 5;
-          ctx.beginPath();
-          ctx.moveTo(link.source.x!, link.source.y!);
-          ctx.lineTo(link.target.x!, link.target.y!);
-          ctx.stroke();
-        }}
-        backgroundColor="transparent"
-        enableZoomInteraction={true}
-        enablePanInteraction={true}
-        enableNodeDrag={true}
-        cooldownTime={3000}
-        d3AlphaDecay={0.01}
-        d3VelocityDecay={0.2}
-        dagMode={'lr'}
-        dagLevelDistance={100}
-        onRenderFramePost={(ctx, globalScale) => {
-          // Draw hover labels on top of everything
-          if (hoveredNode) {
-            const node = filteredData.nodes.find((n: KnowledgeNode) => n.id === hoveredNode);
-            if (node) {
-              const fontSize = 12 / globalScale;
-              const detailFontSize = 10 / globalScale;
-              
-              // Node name
-              ctx.font = `bold ${fontSize}px Inter, sans-serif`;
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              const nameWidth = ctx.measureText(node.name).width;
-              
-              // Background for name
-              ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
-              ctx.fillRect(
-                node.x! - nameWidth / 2 - 8,
-                node.y! + 20,
-                nameWidth + 16,
-                fontSize + 10
-              );
-              
-              // Name text
-              ctx.fillStyle = '#fff';
-              ctx.fillText(node.name, node.x!, node.y! + 20 + fontSize / 2 + 5);
-              
-              // Service and Type
-              ctx.font = `${detailFontSize}px Inter, sans-serif`;
-              
-              // Service text
-              const serviceText = `Service: ${node.service}`;
-              const serviceWidth = ctx.measureText(serviceText).width;
-              
-              // Background for service
-              ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
-              ctx.fillRect(
-                node.x! - serviceWidth / 2 - 6,
-                node.y! + 40,
-                serviceWidth + 12,
-                detailFontSize + 6
-              );
-              
-              // Service text
-              ctx.fillStyle = '#a1a1aa';
-              ctx.fillText(serviceText, node.x!, node.y! + 40 + detailFontSize / 2 + 3);
-              
-              // Type text
-              const typeText = `Type: ${node.type.charAt(0).toUpperCase() + node.type.slice(1)}`;
-              const typeWidth = ctx.measureText(typeText).width;
-              
-              // Background for type
-              ctx.fillStyle = 'rgba(4, 7, 20, 0.95)';
-              ctx.fillRect(
-                node.x! - typeWidth / 2 - 6,
-                node.y! + 55,
-                typeWidth + 12,
-                detailFontSize + 6
-              );
-              
-              // Type text with node color
-              ctx.fillStyle = getNodeColor(node);
-              ctx.fillText(typeText, node.x!, node.y! + 55 + detailFontSize / 2 + 3);
-            }
-          }
-        }}
-      />
+    <div className="relative w-full rounded-xl overflow-hidden glass-card" style={{ height }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
+        nodeTypes={nodeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+        minZoom={0.1}
+        maxZoom={2}
+        className="bg-transparent"
+      >
+        <Background color="rgba(100, 116, 139, 0.1)" gap={16} size={0.5} />
+        <Controls className="bg-card border border-border" />
+        <MiniMap 
+          nodeColor={nodeColor}
+          nodeStrokeWidth={3}
+          pannable
+          zoomable
+          className="bg-card border border-border"
+        />
+      </ReactFlow>
       
       {/* Legend */}
       <div className="absolute bottom-4 left-4 flex gap-4 p-3 glass-card rounded-lg">

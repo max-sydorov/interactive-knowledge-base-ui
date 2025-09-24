@@ -84,11 +84,99 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
 
   // Convert data to React Flow format
   const { flowNodes, flowEdges } = useMemo(() => {
-    const nodes: Node[] = data.nodes.map((node, index) => {
-      const angle = (2 * Math.PI * index) / data.nodes.length;
-      const radius = 250;
-      const x = radius * Math.cos(angle);
-      const y = radius * Math.sin(angle);
+    // Calculate node layers based on upstream/downstream relationships
+    const nodeLayerMap = new Map<string, number>();
+    const inDegree = new Map<string, number>();
+    const outDegree = new Map<string, number>();
+    
+    // Initialize degree counts
+    data.nodes.forEach(node => {
+      inDegree.set(node.id, 0);
+      outDegree.set(node.id, 0);
+    });
+    
+    // Calculate in-degree and out-degree for each node
+    data.links.forEach(link => {
+      inDegree.set(link.target, (inDegree.get(link.target) || 0) + 1);
+      outDegree.set(link.source, (outDegree.get(link.source) || 0) + 1);
+    });
+    
+    // Determine layers using topological sort approach
+    const visited = new Set<string>();
+    const layers: string[][] = [];
+    
+    // Find nodes with no incoming edges (upstream nodes)
+    const queue: string[] = [];
+    data.nodes.forEach(node => {
+      if (inDegree.get(node.id) === 0) {
+        queue.push(node.id);
+        nodeLayerMap.set(node.id, 0);
+      }
+    });
+    
+    // If no pure upstream nodes, start with UI nodes
+    if (queue.length === 0) {
+      data.nodes.forEach(node => {
+        if (node.type === 'ui') {
+          queue.push(node.id);
+          nodeLayerMap.set(node.id, 0);
+        }
+      });
+    }
+    
+    // BFS to assign layers
+    while (queue.length > 0) {
+      const nodeId = queue.shift()!;
+      visited.add(nodeId);
+      const currentLayer = nodeLayerMap.get(nodeId) || 0;
+      
+      // Process downstream nodes
+      data.links.forEach(link => {
+        if (link.source === nodeId && !visited.has(link.target)) {
+          const targetLayer = Math.max(
+            nodeLayerMap.get(link.target) || 0,
+            currentLayer + 1
+          );
+          nodeLayerMap.set(link.target, targetLayer);
+          if (!queue.includes(link.target)) {
+            queue.push(link.target);
+          }
+        }
+      });
+    }
+    
+    // Handle any unvisited nodes
+    data.nodes.forEach(node => {
+      if (!nodeLayerMap.has(node.id)) {
+        nodeLayerMap.set(node.id, 1);
+      }
+    });
+    
+    // Group nodes by layer
+    const layerGroups = new Map<number, string[]>();
+    nodeLayerMap.forEach((layer, nodeId) => {
+      if (!layerGroups.has(layer)) {
+        layerGroups.set(layer, []);
+      }
+      layerGroups.get(layer)!.push(nodeId);
+    });
+    
+    // Calculate positions
+    const layerWidth = 300;
+    const nodeHeight = 100;
+    const maxLayer = Math.max(...Array.from(layerGroups.keys()));
+    
+    const nodes: Node[] = data.nodes.map((node) => {
+      const layer = nodeLayerMap.get(node.id) || 0;
+      const nodesInLayer = layerGroups.get(layer)?.length || 1;
+      const nodeIndex = layerGroups.get(layer)?.indexOf(node.id) || 0;
+      
+      // Calculate x position (left to right based on layer)
+      const x = layer * layerWidth;
+      
+      // Calculate y position (vertically centered within layer)
+      const totalHeight = nodesInLayer * nodeHeight;
+      const y = (nodeIndex - (nodesInLayer - 1) / 2) * nodeHeight;
 
       return {
         id: node.id,

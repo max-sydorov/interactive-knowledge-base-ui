@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ReactFlow } from '@xyflow/react';
 import {
+  ReactFlow,
   Node,
   Edge,
   Background,

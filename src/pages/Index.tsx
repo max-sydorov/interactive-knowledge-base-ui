@@ -136,12 +136,6 @@ Preparing comprehensive response...`;
     }
   };
   
-  // Get the last 3 lines of reasoning text for collapsed view
-  const getLastThreeLines = (text: string) => {
-    const lines = text.split('\n');
-    if (lines.length <= 3) return text;
-    return lines.slice(-3).join('\n');
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -265,9 +259,9 @@ Preparing comprehensive response...`;
               {(isThinking || reasoningText) && (
                 <Collapsible open={isReasoningExpanded} onOpenChange={setIsReasoningExpanded}>
                   <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-medium text-muted-foreground">Reasoning...</h3>
-                      <CollapsibleTrigger asChild>
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between cursor-pointer">
+                        <h3 className="text-sm font-medium text-muted-foreground">Show thinking</h3>
                         <Button 
                           variant="ghost" 
                           size="sm"
@@ -275,19 +269,12 @@ Preparing comprehensive response...`;
                         >
                           {isReasoningExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </Button>
-                      </CollapsibleTrigger>
-                    </div>
-                    
-                    {/* Collapsed view - show last 3 lines */}
-                    {!isReasoningExpanded && (
-                      <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {reasoningText ? getLastThreeLines(reasoningText) : 'Processing...'}
                       </div>
-                    )}
+                    </CollapsibleTrigger>
                     
                     {/* Expanded view - show all text */}
                     <CollapsibleContent>
-                      <div className="text-sm text-muted-foreground whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+                      <div className="text-sm text-muted-foreground whitespace-pre-wrap max-h-[200px] overflow-y-auto mt-2">
                         {reasoningText || 'Processing...'}
                       </div>
                     </CollapsibleContent>

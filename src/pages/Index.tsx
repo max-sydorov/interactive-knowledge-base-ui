@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import KnowledgeGraph from '@/components/KnowledgeGraph';
 import ServiceFilter from '@/components/ServiceFilter';
 import { apiService } from '@/services/apiService';
@@ -12,8 +13,9 @@ import remarkGfm from 'remark-gfm';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const Index: React.FC = () => {
-  const [selectedService, setSelectedService] = useState('all');
-  const [selectedFlow, setSelectedFlow] = useState('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedService, setSelectedService] = useState(searchParams.get('service') || 'all');
+  const [selectedFlow, setSelectedFlow] = useState(searchParams.get('flow') || 'all');
   const [question, setQuestion] = useState('');
   const [llmResponse, setLlmResponse] = useState('');
   const [reasoningText, setReasoningText] = useState('');
@@ -24,6 +26,29 @@ const Index: React.FC = () => {
   const [flows, setFlows] = useState<Array<{ value: string; label: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // Update URL when filters change
+  const handleServiceChange = (service: string) => {
+    setSelectedService(service);
+    const newParams = new URLSearchParams(searchParams);
+    if (service === 'all') {
+      newParams.delete('service');
+    } else {
+      newParams.set('service', service);
+    }
+    setSearchParams(newParams);
+  };
+
+  const handleFlowChange = (flow: string) => {
+    setSelectedFlow(flow);
+    const newParams = new URLSearchParams(searchParams);
+    if (flow === 'all') {
+      newParams.delete('flow');
+    } else {
+      newParams.set('flow', flow);
+    }
+    setSearchParams(newParams);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -154,9 +179,9 @@ Preparing comprehensive response...`;
               services={services}
               flows={flows}
               selectedService={selectedService}
-              onServiceChange={setSelectedService}
+              onServiceChange={handleServiceChange}
               selectedFlow={selectedFlow}
-              onFlowChange={setSelectedFlow}
+              onFlowChange={handleFlowChange}
             />
           </div>
         </div>

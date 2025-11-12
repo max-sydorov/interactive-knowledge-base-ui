@@ -77,8 +77,32 @@ const Index: React.FC = () => {
     fetchData();
   }, [selectedService, selectedFlow, toast]);
 
+  // Load saved question from URL
+  useEffect(() => {
+    const questionUuid = searchParams.get('question_uuid');
+    if (questionUuid) {
+      const loadAnswer = async () => {
+        const savedAnswer = await apiService.getAnswer(questionUuid);
+        if (savedAnswer) {
+          setQuestion(savedAnswer.question);
+          setReasoningText(savedAnswer.reasoning);
+          setLlmResponse(savedAnswer.answer);
+        }
+      };
+      loadAnswer();
+    }
+  }, [searchParams]);
+
   const handleAskQuestion = async () => {
     if (!question.trim()) return;
+    
+    // Generate unique question UUID
+    const questionUuid = crypto.randomUUID();
+    
+    // Update URL with question UUID
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('question_uuid', questionUuid);
+    setSearchParams(newParams);
     
     setIsThinking(true);
     setLlmResponse('');
@@ -87,7 +111,8 @@ const Index: React.FC = () => {
     try {
       const stream = await apiService.askQuestion(question, {
         service: selectedService !== 'all' ? selectedService : undefined,
-        flow: selectedFlow !== 'all' ? selectedFlow : undefined
+        flow: selectedFlow !== 'all' ? selectedFlow : undefined,
+        questionUuid
       });
       
       if (stream) {

@@ -82,12 +82,24 @@ class ApiService {
     }
   }
 
+  async getAnswer(questionUuid: string): Promise<{ question: string; reasoning: string; answer: string } | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/answer/${questionUuid}`);
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to get answer:', error);
+      return null;
+    }
+  }
+
   async askQuestion(
     question: string, 
     context?: { 
       nodeId?: string; 
       service?: string; 
       flow?: string;
+      questionUuid?: string;
     }
   ): Promise<ReadableStream<Uint8Array> | null> {
     try {
@@ -96,7 +108,11 @@ class ApiService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ question, context }),
+        body: JSON.stringify({ 
+          question, 
+          context,
+          question_uuid: context?.questionUuid 
+        }),
       });
 
       if (!response.ok) {

@@ -84,7 +84,7 @@ export const FeedbackSection = ({ questionUuid }: FeedbackSectionProps) => {
           size="sm"
           onClick={handleThumbsUp}
           disabled={isSubmitting || feedbackGiven !== null}
-          className={`hover:bg-muted ${feedbackGiven === 'good' ? 'text-primary' : ''}`}
+          className={`hover:bg-muted hover:text-current ${feedbackGiven === 'good' ? 'text-primary' : ''}`}
         >
           <ThumbsUp className="h-4 w-4" />
         </Button>
@@ -93,7 +93,7 @@ export const FeedbackSection = ({ questionUuid }: FeedbackSectionProps) => {
           size="sm"
           onClick={handleThumbsDown}
           disabled={isSubmitting || feedbackGiven !== null}
-          className={`hover:bg-muted ${feedbackGiven === 'bad' ? 'text-destructive' : ''}`}
+          className={`hover:bg-muted hover:text-current ${feedbackGiven === 'bad' ? 'text-destructive' : ''}`}
         >
           <ThumbsDown className="h-4 w-4" />
         </Button>

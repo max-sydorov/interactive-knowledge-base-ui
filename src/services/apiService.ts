@@ -126,6 +126,39 @@ class ApiService {
       return null;
     }
   }
+
+  async postFeedback(
+    questionUuid: string,
+    feedbackRating: 'good' | 'bad',
+    feedbackMessage?: string
+  ): Promise<void> {
+    try {
+      const body: any = {
+        questionUuid,
+        feedbackRating,
+      };
+      if (feedbackMessage) {
+        body.feedbackMessage = feedbackMessage;
+      }
+
+      console.log('Posting feedback:', body);
+
+      const response = await fetch(`${API_BASE_URL}/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error posting feedback:', error);
+      throw error;
+    }
+  }
 }
 
 export const apiService = new ApiService();

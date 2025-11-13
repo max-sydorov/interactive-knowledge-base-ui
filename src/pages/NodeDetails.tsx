@@ -10,6 +10,7 @@ import { apiService } from '@/services/apiService';
 import { KnowledgeNode, KnowledgeGraph } from '@/types/knowledge';
 import { useToast } from '@/hooks/use-toast';
 import KnowledgeGraphComponent from '@/components/KnowledgeGraph';
+import { FeedbackSection } from '@/components/FeedbackSection';
 
 
 const NodeDetails: React.FC = () => {
@@ -22,6 +23,7 @@ const NodeDetails: React.FC = () => {
   const [node, setNode] = useState<KnowledgeNode | null>(null);
   const [graphData, setGraphData] = useState<KnowledgeGraph | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentQuestionUuid, setCurrentQuestionUuid] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,6 +58,7 @@ const NodeDetails: React.FC = () => {
   useEffect(() => {
     const questionUuid = searchParams.get('question_uuid');
     if (questionUuid) {
+      setCurrentQuestionUuid(questionUuid);
       const loadAnswer = async () => {
         const savedAnswer = await apiService.getAnswer(questionUuid);
         if (savedAnswer) {
@@ -72,6 +75,7 @@ const NodeDetails: React.FC = () => {
     
     // Generate unique question UUID
     const questionUuid = crypto.randomUUID();
+    setCurrentQuestionUuid(questionUuid);
     
     // Update URL with question UUID
     const newParams = new URLSearchParams(searchParams);
@@ -303,6 +307,9 @@ const NodeDetails: React.FC = () => {
                         {llmResponse}
                       </ReactMarkdown>
                     </div>
+                  )}
+                  {llmResponse && currentQuestionUuid && (
+                    <FeedbackSection questionUuid={currentQuestionUuid} />
                   )}
                 </div>
               )}

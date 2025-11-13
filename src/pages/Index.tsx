@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { FeedbackSection } from '@/components/FeedbackSection';
 
 const Index: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,6 +26,7 @@ const Index: React.FC = () => {
   const [services, setServices] = useState<string[]>([]);
   const [flows, setFlows] = useState<Array<{ value: string; label: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentQuestionUuid, setCurrentQuestionUuid] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Update URL when filters change
@@ -81,6 +83,7 @@ const Index: React.FC = () => {
   useEffect(() => {
     const questionUuid = searchParams.get('question_uuid');
     if (questionUuid) {
+      setCurrentQuestionUuid(questionUuid);
       const loadAnswer = async () => {
         const savedAnswer = await apiService.getAnswer(questionUuid);
         if (savedAnswer) {
@@ -98,6 +101,7 @@ const Index: React.FC = () => {
     
     // Generate unique question UUID
     const questionUuid = crypto.randomUUID();
+    setCurrentQuestionUuid(questionUuid);
     
     // Update URL with question UUID
     const newParams = new URLSearchParams(searchParams);
@@ -365,6 +369,9 @@ Preparing comprehensive response...`;
                         {llmResponse}
                       </ReactMarkdown>
                     </div>
+                  )}
+                  {llmResponse && currentQuestionUuid && (
+                    <FeedbackSection questionUuid={currentQuestionUuid} />
                   )}
                 </div>
               )}

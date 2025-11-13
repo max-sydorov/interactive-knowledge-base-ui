@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ArrowLeft, FileCode, MessageSquare, ChevronRight, Network, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, FileCode, MessageSquare, ChevronRight, Network } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,7 +10,7 @@ import { apiService } from '@/services/apiService';
 import { KnowledgeNode, KnowledgeGraph } from '@/types/knowledge';
 import { useToast } from '@/hooks/use-toast';
 import KnowledgeGraphComponent from '@/components/KnowledgeGraph';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
 
 const NodeDetails: React.FC = () => {
   const { nodeId } = useParams<{ nodeId: string }>();
@@ -18,8 +18,6 @@ const NodeDetails: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [question, setQuestion] = useState('');
   const [llmResponse, setLlmResponse] = useState('');
-  const [reasoningText, setReasoningText] = useState('');
-  const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [node, setNode] = useState<KnowledgeNode | null>(null);
   const [graphData, setGraphData] = useState<KnowledgeGraph | null>(null);
@@ -62,7 +60,6 @@ const NodeDetails: React.FC = () => {
         const savedAnswer = await apiService.getAnswer(questionUuid);
         if (savedAnswer) {
           setQuestion(savedAnswer.question);
-          setReasoningText(savedAnswer.reasoning);
           setLlmResponse(savedAnswer.answer);
         }
       };
@@ -83,7 +80,6 @@ const NodeDetails: React.FC = () => {
     
     setIsThinking(true);
     setLlmResponse('');
-    setReasoningText('');
     
     try {
       const stream = await apiService.askQuestion(question, { 
@@ -94,55 +90,17 @@ const NodeDetails: React.FC = () => {
       if (stream) {
         const reader = stream.getReader();
         const decoder = new TextDecoder();
-        let isAnswerPhase = false;
-        let buffer = '';
         
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           
           const chunk = decoder.decode(value);
-          buffer += chunk;
-          
-          // Check if we should switch to answer phase
-          if (!isAnswerPhase && buffer.includes('Answer:')) {
-            const parts = buffer.split('Answer:');
-            // Add remaining reasoning text
-            setReasoningText(prev => prev + parts[0]);
-            // Start answer phase with text after "Answer:"
-            isAnswerPhase = true;
-            buffer = parts[1] || '';
-            if (buffer) {
-              setLlmResponse(buffer);
-            }
-          } else if (isAnswerPhase) {
-            // Continue streaming to answer
-            setLlmResponse(prev => prev + chunk);
-            buffer = '';
-          } else {
-            // Stream to reasoning
-            setReasoningText(prev => prev + chunk);
-          }
+          setLlmResponse(prev => prev + chunk);
         }
       } else {
         // Fallback to mock response if streaming fails
-        const mockReasoning = `Analyzing the knowledge graph structure...
-Identifying relevant connections in the system...
-Processing query context and parameters...
-Examining node relationships and dependencies...
-Calculating optimal traversal paths...
-Evaluating service interactions...
-Checking data flow patterns...
-Aggregating related information...
-Applying contextual filters...
-Preparing comprehensive response...`;
         const mockAnswer = `Here's information about "${question}":\n\nThis is a mock streaming response. In a real implementation, this would stream from the server.`;
-        
-        // Stream reasoning phase
-        for (let i = 0; i <= mockReasoning.length; i++) {
-          await new Promise(resolve => setTimeout(resolve, 10));
-          setReasoningText(mockReasoning.slice(0, i));
-        }
         
         // Stream answer phase
         for (let i = 0; i <= mockAnswer.length; i++) {
@@ -312,33 +270,6 @@ Preparing comprehensive response...`;
               >
                 {isThinking ? 'Thinking...' : 'Submit'}
               </Button>
-
-              {/* Reasoning Section */}
-              {(isThinking || reasoningText) && (
-                <Collapsible open={isReasoningExpanded} onOpenChange={setIsReasoningExpanded}>
-                  <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
-                    <CollapsibleTrigger asChild>
-                      <div className="flex items-center justify-between cursor-pointer">
-                        <h3 className="text-sm font-medium text-muted-foreground">Show thinking</h3>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                        >
-                          {isReasoningExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </CollapsibleTrigger>
-                    
-                    {/* Expanded view - show all text */}
-                    <CollapsibleContent>
-                      <div className="text-sm text-muted-foreground whitespace-pre-wrap max-h-[200px] overflow-y-auto mt-2">
-                        {reasoningText || 'Processing...'}
-                      </div>
-                    </CollapsibleContent>
-                  </div>
-                </Collapsible>
-              )}
 
               {/* Answer Section */}
               {(isThinking || llmResponse) && (

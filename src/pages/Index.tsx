@@ -27,6 +27,7 @@ const Index: React.FC = () => {
   const [flows, setFlows] = useState<Array<{ value: string; label: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentQuestionUuid, setCurrentQuestionUuid] = useState<string | null>(null);
+  const [knowledgeCutoffDate, setKnowledgeCutoffDate] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Update URL when filters change
@@ -56,14 +57,18 @@ const Index: React.FC = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [graph, servicesData, flowsData] = await Promise.all([
+        const [graph, servicesData, flowsData, status] = await Promise.all([
           apiService.getKnowledgeGraph(selectedService, selectedFlow),
           apiService.getServices(),
-          apiService.getFlows()
+          apiService.getFlows(),
+          apiService.getStatus()
         ]);
         setGraphData(graph);
         setServices(servicesData);
         setFlows(flowsData);
+        if (status?.knowledgeCutoffDate) {
+          setKnowledgeCutoffDate(status.knowledgeCutoffDate);
+        }
       } catch (error) {
         console.error('Failed to fetch data:', error);
         toast({
@@ -200,7 +205,14 @@ Preparing comprehensive response...`;
             <div className="flex items-center gap-3">
               <Network className="w-8 h-8 text-primary" />
               <div>
-                <h1 className="text-2xl font-bold gradient-text">OnDeck Knowledge Base</h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold gradient-text">OnDeck Knowledge Base</h1>
+                  {knowledgeCutoffDate && (
+                    <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                      Knowledge cutoff: {knowledgeCutoffDate}
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">Interactive System Overview</p>
               </div>
             </div>

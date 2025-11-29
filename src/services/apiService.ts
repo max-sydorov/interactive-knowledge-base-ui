@@ -159,6 +159,15 @@ class ApiService {
       throw error;
     }
   }
+
+  async getStatus(): Promise<{ knowledgeCutoffDate: string } | null> {
+    try {
+      return await this.fetchWithErrorHandling<{ knowledgeCutoffDate: string }>(`${API_BASE_URL}/status`);
+    } catch (error) {
+      console.error('Failed to get status:', error);
+      return null;
+    }
+  }
 }
 
 export const apiService = new ApiService();

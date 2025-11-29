@@ -162,10 +162,13 @@ class ApiService {
 
   async getStatus(): Promise<{ knowledgeCutoffDate: string } | null> {
     try {
-      return await this.fetchWithErrorHandling<{ knowledgeCutoffDate: string }>(`${API_BASE_URL}/status`);
+      return await this.fetchWithErrorHandling<{ knowledgeCutoffDate: string }>(
+        `${API_BASE_URL}/status`,
+        { knowledgeCutoffDate: '2024-11-15' }
+      );
     } catch (error) {
       console.error('Failed to get status:', error);
-      return null;
+      return { knowledgeCutoffDate: '2024-11-15' };
     }
   }
 }

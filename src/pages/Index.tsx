@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import KnowledgeGraph from '@/components/KnowledgeGraph';
 import ServiceFilter from '@/components/ServiceFilter';
@@ -28,7 +28,6 @@ const Index: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentQuestionUuid, setCurrentQuestionUuid] = useState<string | null>(null);
   const [knowledgeCutoffDate, setKnowledgeCutoffDate] = useState<string | null>(null);
-  const justSubmittedRef = useRef(false);
   const { toast } = useToast();
 
   // Update URL when filters change
@@ -85,10 +84,10 @@ const Index: React.FC = () => {
     fetchData();
   }, [selectedService, selectedFlow, toast]);
 
-  // Load saved question from URL (only on initial load, not after local submit)
+  // Load saved question from URL only on initial page load
   useEffect(() => {
     const questionUuid = searchParams.get('question_uuid');
-    if (questionUuid && !justSubmittedRef.current) {
+    if (questionUuid) {
       setCurrentQuestionUuid(questionUuid);
       const loadAnswer = async () => {
         const savedAnswer = await apiService.getAnswer(questionUuid);
@@ -100,9 +99,8 @@ const Index: React.FC = () => {
       };
       loadAnswer();
     }
-    // Reset the flag after checking
-    justSubmittedRef.current = false;
-  }, [searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAskQuestion = async () => {
     if (!question.trim()) return;
@@ -110,9 +108,6 @@ const Index: React.FC = () => {
     // Generate unique question UUID
     const questionUuid = crypto.randomUUID();
     setCurrentQuestionUuid(questionUuid);
-    
-    // Mark that we just submitted locally to prevent reload from URL
-    justSubmittedRef.current = true;
     
     // Update URL with question UUID
     const newParams = new URLSearchParams(searchParams);

@@ -54,7 +54,7 @@ const NodeDetails: React.FC = () => {
     fetchData();
   }, [nodeId, toast]);
 
-  // Load saved question from URL
+  // Load saved question from URL only on initial page load
   useEffect(() => {
     const questionUuid = searchParams.get('question_uuid');
     if (questionUuid) {
@@ -68,7 +68,8 @@ const NodeDetails: React.FC = () => {
       };
       loadAnswer();
     }
-  }, [searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAskQuestion = async () => {
     if (!question.trim()) return;
